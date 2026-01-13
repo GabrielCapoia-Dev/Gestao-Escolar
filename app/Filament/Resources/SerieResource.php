@@ -17,7 +17,7 @@ class SerieResource extends Resource
 {
     protected static ?string $model = Serie::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
     public static ?string $modelLabel = 'Série';
     protected static ?string $navigationGroup = "Gestão Escolar";
     public static ?string $pluralModelLabel = 'Séries';
