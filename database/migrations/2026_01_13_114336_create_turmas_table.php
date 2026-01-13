@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('turmas', function (Blueprint $table) {
             $table->id();
+            $table->string('codigo')->unique();
+            $table->string('nome');
+            $table->foreignId('id_serie')->constrained('series')->cascadeOnDelete();
+            $table->foreignId('id_escola')->constrained('escolas')->cascadeOnDelete();
             $table->timestamps();
         });
     }
