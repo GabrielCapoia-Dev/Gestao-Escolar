@@ -3,10 +3,14 @@
 namespace Database\Seeders;
 
 use App\Models\DominioEmail;
+use App\Models\Escola;
+use App\Models\Professor;
 use App\Models\Serie;
+use App\Models\Turma;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
@@ -154,5 +158,36 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call([]);
+
+        // 1. Criar Escolas (10 escolas)
+        $this->command->info('Criando escolas...');
+        $escolas = Escola::factory(10)->create();
+
+        // 2. Criar Séries (17 séries - da educação infantil ao ensino médio)
+        $this->command->info('Criando séries...');
+        $series = Serie::factory(17)->create();
+
+        // 3. Criar Turmas (50 turmas distribuídas entre escolas e séries)
+        $this->command->info('Criando turmas...');
+        $turmas = Turma::factory(50)->create();
+
+        // 4. Criar Professores (30 professores)
+        $this->command->info('Criando professores...');
+        $professores = Professor::factory(30)->create();
+
+        // 5. Associar Professores às Turmas (cada professor leciona em 2-5 turmas)
+        $this->command->info('Associando professores às turmas...');
+        foreach ($professores as $professor) {
+            $quantidadeTurmas = rand(2, 5);
+            $turmasAleatorias = Turma::inRandomOrder()->limit($quantidadeTurmas)->pluck('id');
+            $professor->turmas()->attach($turmasAleatorias);
+        }
+        $this->command->info('✅ Dados populados com sucesso!');
+        $this->command->info("📊 Resumo:");
+        $this->command->info("   - Escolas: " . Escola::count());
+        $this->command->info("   - Séries: " . Serie::count());
+        $this->command->info("   - Turmas: " . Turma::count());
+        $this->command->info("   - Professores: " . Professor::count());
+        $this->command->info("   - Relacionamentos Professor-Turma: " . DB::table('professor_turma')->count());
     }
 }
