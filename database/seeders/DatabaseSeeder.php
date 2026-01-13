@@ -51,10 +51,10 @@ class DatabaseSeeder extends Seeder
             'Criar Turmas',
             'Editar Turmas',
             'Excluir Turmas',
-            'Listar Alunos',
-            'Criar Alunos',
-            'Editar Alunos',
-            'Excluir Alunos',
+            'Listar Professores',
+            'Criar Professores',
+            'Editar Professores',
+            'Excluir Professores',
         ];
 
         $secretarioPermissionsList = [
