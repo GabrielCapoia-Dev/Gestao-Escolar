@@ -30,4 +30,12 @@ class Serie extends Model
     {
         return $this->hasMany(Turma::class, 'id_serie');
     }
+
+    public function componentesCurriculares()
+    {
+        return $this->belongsToMany(
+            ComponenteCurricular::class,
+            'serie_componente_curricular'
+        );
+    }
 }

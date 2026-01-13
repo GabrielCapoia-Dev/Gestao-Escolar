@@ -35,7 +35,7 @@ class SerieResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->placeholder('Ex: SER001'),
-                            
+
                         Forms\Components\TextInput::make('nome')
                             ->label('Nome')
                             ->required()
@@ -55,12 +55,12 @@ class SerieResource extends Resource
                     ->label('Código')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('nome')
                     ->label('Nome')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('turmas_count')
                     ->label('Qtd. Turmas')
                     ->counts('turmas')
@@ -94,6 +94,14 @@ class SerieResource extends Resource
             ])
             ->defaultSort('updated_at', 'desc');
     }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ComponentesCurricularesRelationManager::class,
+        ];
+    }
+
 
     public static function getPages(): array
     {

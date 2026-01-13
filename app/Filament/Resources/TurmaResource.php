@@ -186,6 +186,12 @@ class TurmaResource extends Resource
             ])
             ->defaultSort('updated_at', 'desc');
     }
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ComponentesRelationManager::class,
+        ];
+    }
 
     public static function getPages(): array
     {

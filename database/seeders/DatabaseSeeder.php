@@ -142,19 +142,22 @@ class DatabaseSeeder extends Seeder
 
         // 1. Criar Escolas (10 escolas)
         $this->command->info('Criando escolas...');
-        $escolas = Escola::factory(10)->create();
+        $escolas = Escola::factory(3)->create();
 
         // 2. Criar Séries (17 séries - da educação infantil ao ensino médio)
         $this->command->info('Criando séries...');
-        $series = Serie::factory(17)->create();
+        $series = Serie::factory(10)->create();
 
-        // 3. Criar Turmas (50 turmas distribuídas entre escolas e séries)
-        $this->command->info('Criando turmas...');
-        $turmas = Turma::factory(50)->create();
+        $this->command->info('Criando componentes curriculares...');
+        $this->call(ComponenteCurricularSeeder::class);
 
         // 4. Criar Professores (30 professores)
         $this->command->info('Criando professores...');
         $professores = Professor::factory(30)->create();
+
+        // 3. Criar Turmas (50 turmas distribuídas entre escolas e séries)
+        $this->command->info('Criando turmas...');
+        $turmas = Turma::factory(20)->create();
 
         // 5. Associar Professores às Turmas (cada professor leciona em 2-5 turmas)
         $this->command->info('Associando professores às turmas...');

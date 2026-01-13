@@ -42,8 +42,19 @@ class Turma extends Model
         return $this->belongsTo(Escola::class, 'id_escola');
     }
 
+    public function componentes()
+    {
+        return $this->belongsToMany(
+            ComponenteCurricular::class,
+            'turma_componente_professor'
+        )->withPivot('professor_id');
+    }
+
     public function professores()
     {
-        return $this->belongsToMany(Professor::class);
+        return $this->belongsToMany(
+            Professor::class,
+            'turma_componente_professor'
+        )->withPivot('componente_curricular_id');
     }
 }

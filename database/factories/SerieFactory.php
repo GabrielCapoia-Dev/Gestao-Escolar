@@ -8,9 +8,7 @@ class SerieFactory extends Factory
 {
     public function definition(): array
     {
-        static $counter = 1;
-        
-        $series = [
+        static $series = [
             ['codigo' => 'SER001', 'nome' => 'Berçário'],
             ['codigo' => 'SER002', 'nome' => 'Maternal I'],
             ['codigo' => 'SER003', 'nome' => 'Maternal II'],
@@ -29,14 +27,7 @@ class SerieFactory extends Factory
             ['codigo' => 'SER016', 'nome' => '2º Ano EM'],
             ['codigo' => 'SER017', 'nome' => '3º Ano EM'],
         ];
-        
-        $serie = $series[$counter - 1] ?? [
-            'codigo' => 'SER' . str_pad($counter, 3, '0', STR_PAD_LEFT),
-            'nome' => $counter . 'º Ano'
-        ];
-        
-        $counter++;
-        
-        return $serie;
+
+        return fake()->randomElement($series);
     }
 }

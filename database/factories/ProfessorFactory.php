@@ -2,26 +2,27 @@
 
 namespace Database\Factories;
 
+use App\Models\Escola;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class ProfessorFactory extends Factory
 {
     public function definition(): array
     {
-        static $counter = 1;
-        
         $nome = fake()->name();
-        $primeiroNome = explode(' ', $nome)[0];
-        $sobrenome = explode(' ', $nome)[count(explode(' ', $nome)) - 1];
-        
+        $slug = Str::slug($nome, '.');
+        $escolaId = Escola::inRandomOrder()->value('id') ?? Escola::factory();
+
         return [
-            'matricula' => 'PROF' . str_pad($counter++, 4, '0', STR_PAD_LEFT),
+            'id_escola' => $escolaId,
+            'matricula' => fake()->numerify('PROF####'),
             'nome' => $nome,
-            'email' => strtolower($primeiroNome . '.' . $sobrenome . '@escola.edu.br'),
-            'telefone' => fake()->boolean(85) ? $this->gerarTelefoneBrasileiro() : null,
+            'email' => "{$slug}." . fake()->unique()->numberBetween(1, 9999) . "@escola.edu.br",
+            'telefone' => fake()->optional(0.8)->numerify('(##) 9####-####'),
         ];
     }
-    
+
     private function gerarTelefoneBrasileiro(): string
     {
         $ddd = fake()->numberBetween(11, 99);

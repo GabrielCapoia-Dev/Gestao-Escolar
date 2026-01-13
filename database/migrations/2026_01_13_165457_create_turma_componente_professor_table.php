@@ -1,0 +1,35 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('turma_componente_professor', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('turma_id')->constrained('turmas')->cascadeOnDelete();
+            $table->foreignId('componente_curricular_id')->constrained('componentes_curriculares')->cascadeOnDelete();
+            $table->foreignId('professor_id')->constrained('professores')->cascadeOnDelete();
+
+            // 🔒 Um professor por componente na turma
+            $table->unique(['turma_id', 'componente_curricular_id']);
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('turma_componente_professor');
+    }
+};

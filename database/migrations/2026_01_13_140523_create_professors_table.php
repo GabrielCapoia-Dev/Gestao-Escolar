@@ -13,11 +13,20 @@ return new class extends Migration
     {
         Schema::create('professores', function (Blueprint $table) {
             $table->id();
-            $table->string('matricula')->unique();
+
+            $table->foreignId('id_escola')
+                ->constrained('escolas')
+                ->cascadeOnDelete();
+
+            $table->string('matricula');
             $table->string('nome');
-            $table->string('email')->unique();
-            $table->string('telefone')->nullable()->unique();
+            $table->string('email')->nullable();
+            $table->string('telefone')->nullable();
+
             $table->timestamps();
+
+            // 🔐 UNIQUE composta (regra principal)
+            $table->unique(['id_escola', 'matricula']);
         });
     }
 

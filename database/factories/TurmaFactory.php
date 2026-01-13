@@ -12,18 +12,12 @@ class TurmaFactory extends Factory
     {
         static $counter = 1;
 
-        $letras = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-        $turnos = ['Manha', 'Tarde', 'Noite', 'Integral'];
-
-        $letra = fake()->randomElement($letras);
-        $turno = fake()->randomElement($turnos);
-
         return [
             'codigo' => 'TUR' . str_pad($counter++, 3, '0', STR_PAD_LEFT),
-            'nome' => $letra,
-            'turno' => strtolower($turno),
-            'id_serie' => Serie::inRandomOrder()->first()?->id ?? Serie::factory(),
-            'id_escola' => Escola::inRandomOrder()->first()?->id ?? Escola::factory(),
+            'nome' => fake()->randomElement(['A', 'B', 'C', 'D', 'E']),
+            'turno' => fake()->randomElement(['manha', 'tarde', 'noite', 'integral']),
+            'id_serie' => Serie::inRandomOrder()->value('id') ?? Serie::factory(),
+            'id_escola' => Escola::inRandomOrder()->value('id') ?? Escola::factory(),
         ];
     }
 }

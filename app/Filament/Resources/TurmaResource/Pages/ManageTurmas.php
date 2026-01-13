@@ -16,4 +16,17 @@ class ManageTurmas extends ManageRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    protected function afterCreate(): void
+    {
+        $turma = $this->record;
+
+        $componentes = $turma->serie->componentesCurriculares;
+
+        foreach ($componentes as $componente) {
+            $turma->componentes()->attach($componente->id, [
+                'professor_id' => null,
+            ]);
+        }
+    }
 }

@@ -39,4 +39,9 @@ class Escola extends Model
     {
         return $this->hasMany(Turma::class, 'id_escola');
     }
+    
+    public function professores()
+    {
+        return $this->hasMany(Professor::class, 'id_escola');
+    }
 }
