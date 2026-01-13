@@ -11,8 +11,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Models\Escola;
+use Filament\Forms\Get;
 
 class ProfessorResource extends Resource
 {
@@ -36,13 +36,13 @@ class ProfessorResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->placeholder('Ex: PROF001'),
-                            
+
                         Forms\Components\TextInput::make('nome')
                             ->label('Nome Completo')
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Ex: João da Silva'),
-                            
+
                         Forms\Components\TextInput::make('email')
                             ->label('E-mail')
                             ->email()
@@ -50,7 +50,7 @@ class ProfessorResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->placeholder('professor@exemplo.com'),
-                            
+
                         Forms\Components\TextInput::make('telefone')
                             ->label('Telefone')
                             ->tel()
@@ -60,20 +60,52 @@ class ProfessorResource extends Resource
                             ->placeholder('(00) 00000-0000'),
                     ])
                     ->columns(2),
-                    
+
                 Forms\Components\Section::make('Turmas')
                     ->schema([
+
+                        // SELECT DE ESCOLA
+                        Forms\Components\Select::make('escola_id')
+                            ->label('Escola')
+                            ->options(
+                                Escola::query()
+                                    ->orderBy('nome')
+                                    ->pluck('nome', 'id')
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->reactive()
+                            ->required()
+                            ->afterStateUpdated(fn($set) => $set('turmas', []))
+                            ->dehydrated(false),
+
+                        // SELECT DE TURMAS (DEPENDENTE)
                         Forms\Components\Select::make('turmas')
                             ->label('Turmas')
                             ->relationship('turmas', 'nome')
                             ->multiple()
                             ->searchable()
                             ->preload()
-                            ->optionsLimit(50)
-                            ->getOptionLabelFromRecordUsing(fn (Turma $record) => "{$record->nome} - {$record->serie->nome} ({$record->escola->nome})")
-                            ->placeholder('Selecione as turmas')
-                            ->helperText('Selecione todas as turmas que este professor leciona'),
-                    ]),
+                            ->disabled(fn(Get $get) => blank($get('escola_id')))
+                            ->options(function (Get $get) {
+                                if (!$get('escola_id')) {
+                                    return [];
+                                }
+
+                                return Turma::query()
+                                    ->where('id_escola', $get('escola_id'))
+                                    ->with('serie')
+                                    ->orderBy('nome')
+                                    ->get()
+                                    ->mapWithKeys(fn($turma) => [
+                                        $turma->id => "{$turma->nome} - {$turma->serie->nome}",
+                                    ]);
+                            })
+                            ->helperText('Selecione as turmas da escola escolhida'),
+
+                    ])
+                    ->columns(2),
+
             ]);
     }
 
@@ -85,24 +117,24 @@ class ProfessorResource extends Resource
                     ->label('Matrícula')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('nome')
                     ->label('Nome')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                    
+
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-mail')
                     ->searchable()
                     ->copyable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('telefone')
                     ->label('Telefone')
                     ->searchable()
                     ->placeholder('Não informado'),
-                    
+
                 Tables\Columns\TextColumn::make('turmas_count')
                     ->label('Qtd. Turmas')
                     ->counts('turmas')
@@ -110,13 +142,13 @@ class ProfessorResource extends Resource
                     ->alignCenter()
                     ->badge()
                     ->color('success'),
-                    
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Criado em')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Atualizado em')
                     ->dateTime('d/m/Y H:i')
