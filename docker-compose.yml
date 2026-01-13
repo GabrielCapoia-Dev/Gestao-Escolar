@@ -1,45 +1,77 @@
 services:
   app:
+    image: laravel-app-gestao-escolar
+    container_name: laravel-app-gestao-escolar
     build:
       context: .
       dockerfile: Dockerfile
-    image: laravel-app-transporte
-    container_name: laravel-app-transporte
     working_dir: /var/www
     ports:
       - "8000:8000"
     volumes:
       - .:/var/www
-      - vendor:/var/www/vendor
       - node_modules:/var/www/node_modules
-    command: sh -lc "php artisan serve --host=0.0.0.0 --port=8000"
+    command: php artisan serve --host=0.0.0.0 --port=8000
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
-      - laravel_transporte
+      - laravel_gestao-escolar
+
+  queue-worker:
+    image: laravel-app-gestao-escolar
+    container_name: laravel-queue-worker-gestao-escolar
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - laravel_gestao-escolar
+
+  redis:
+    image: redis:7-alpine
+    container_name: laravel-redis-gestao-escolar
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - laravel_gestao-escolar
 
   db:
     image: mysql:8.0
-    container_name: laravel-db-transporte
+    container_name: laravel-db-gestao-escolar
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: transporte
+      MYSQL_DATABASE: gestao-escolar
     volumes:
       - db_data:/var/lib/mysql
     ports:
       - "3307:3306"
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 20
     networks:
-      - laravel_transporte
+      - laravel_gestao-escolar
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: laravel-phpmyadmin-transporte
+    container_name: laravel-phpmyadmin-gestao-escolar
     environment:
       PMA_HOST: db
       PMA_USER: root
@@ -50,14 +82,13 @@ services:
       db:
         condition: service_healthy
     networks:
-      - laravel_transporte
+      - laravel_gestao-escolar
 
 volumes:
   db_data:
-  vendor:
   node_modules:
-
+  redis_data:
 
 networks:
-  laravel_transporte:
+  laravel_gestao-escolar:
     driver: bridge
