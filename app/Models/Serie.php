@@ -6,18 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 
-class Escola extends Model
+class Serie extends Model
 {
     use HasFactory;
     use Notifiable;
 
-    protected $table = 'escolas';
+    protected $table = 'series';
 
     protected $fillable = [
         'codigo',
         'nome',
-        'telefone',
-        'email',
     ];
 
     public function casts(): array
@@ -25,18 +23,11 @@ class Escola extends Model
         return [
             'codigo' => 'string',
             'nome' => 'string',
-            'telefone' => 'string',
-            'email' => 'string',
         ];
-    }
-
-    public function usuarios()
-    {
-        return $this->hasMany(User::class, 'id_escola');
     }
 
     public function turmas()
     {
-        return $this->hasMany(Turma::class, 'id_escola');
+        return $this->hasMany(Turma::class, 'id_serie');
     }
 }
