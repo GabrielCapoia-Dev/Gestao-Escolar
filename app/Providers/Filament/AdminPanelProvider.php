@@ -25,18 +25,17 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->routes(function () {
-            })
+            ->routes(function () {})
             ->default()
             ->id('admin')
             ->path('admin')
             ->login(LoginPage::class)
             ->colors([
-                'primary' => Color::Green,
+                'primary' => Color::Sky,
                 'gray' => [
-                    50 => '#e9f0f0ff',
-                    100 => '#c7f8e9c7',
-                    200 => '#c0d4d4ff',
+                    50  => '#f0f7ff',
+                    100 => '#e0efff',
+                    200 => '#c7ddf5',
                     300 => '#c7caccff',
                     400 => '#a0a0a0ff',
                     500 => '#929292ff',
