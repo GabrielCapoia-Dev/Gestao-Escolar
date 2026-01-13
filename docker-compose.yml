@@ -1,59 +1,57 @@
 services:
   app:
+    build: .
     image: laravel-app-gestao-escolar
     container_name: laravel-app-gestao-escolar
-    build:
-      context: .
-      dockerfile: Dockerfile
-    working_dir: /var/www
-    ports:
-      - "8000:8000"
     volumes:
       - .:/var/www
-      - node_modules:/var/www/node_modules
-    command: php artisan serve --host=0.0.0.0 --port=8000
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
+    networks:
+      - laravel_gestao-escolar
+
+  nginx:
+    image: nginx:alpine
+    container_name: laravel-nginx-gestao-escolar
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
     networks:
       - laravel_gestao-escolar
 
   queue-worker:
     image: laravel-app-gestao-escolar
     container_name: laravel-queue-worker-gestao-escolar
-    working_dir: /var/www
     volumes:
       - .:/var/www
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work redis --sleep=3 --tries=3
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_started
+      db:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - laravel_gestao-escolar
 
   redis:
     image: redis:7-alpine
-    container_name: laravel-redis-gestao-escolar
-    ports:
-      - "6379:6379"
+    container_name: laravel-redis-gestao-escolar  # Adicionado
     volumes:
       - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    networks:
+    networks:  # ADICIONADO
       - laravel_gestao-escolar
 
   db:
     image: mysql:8.0
-    container_name: laravel-db-gestao-escolar
+    container_name: laravel-db-gestao-escolar  # Adicionado
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: gestao-escolar
@@ -64,29 +62,12 @@ services:
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
       interval: 5s
-      timeout: 5s
       retries: 20
-    networks:
-      - laravel_gestao-escolar
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: laravel-phpmyadmin-gestao-escolar
-    environment:
-      PMA_HOST: db
-      PMA_USER: root
-      PMA_PASSWORD: root
-    ports:
-      - "8081:80"
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
+    networks:  # ADICIONADO
       - laravel_gestao-escolar
 
 volumes:
   db_data:
-  node_modules:
   redis_data:
 
 networks:
