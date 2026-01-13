@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('codigo')->unique();
             $table->string('nome');
+            $table->enum('turno', ['manha', 'tarde', 'noite', 'integral']);
             $table->foreignId('id_serie')->constrained('series')->cascadeOnDelete();
             $table->foreignId('id_escola')->constrained('escolas')->cascadeOnDelete();
             $table->timestamps();

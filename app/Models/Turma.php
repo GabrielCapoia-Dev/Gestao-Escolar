@@ -16,6 +16,7 @@ class Turma extends Model
     protected $fillable = [
         'codigo',
         'nome',
+        'turno',
         'id_serie',
         'id_escola',
     ];
@@ -25,6 +26,7 @@ class Turma extends Model
         return [
             'codigo' => 'string',
             'nome' => 'string',
+            'turno' => 'string',
             'id_serie' => 'integer',
             'id_escola' => 'integer',
         ];

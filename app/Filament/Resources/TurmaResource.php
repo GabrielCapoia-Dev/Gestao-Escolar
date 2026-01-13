@@ -43,6 +43,17 @@ class TurmaResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Ex: Turma A, Turma B, etc.'),
+
+                        Forms\Components\Select::make('turno')
+                            ->label('Turno')
+                            ->options([
+                                'manha' => 'Manhã',
+                                'tarde' => 'Tarde',
+                                'noite' => 'Noite',
+                                'integral' => 'Integral',
+                            ])
+                            ->required()
+                            ->placeholder('Selecione o turno'),
                             
                         Forms\Components\Select::make('id_serie')
                             ->label('Série')
@@ -108,6 +119,12 @@ class TurmaResource extends Resource
                 Tables\Columns\TextColumn::make('nome')
                     ->label('Nome')
                     ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('turno')
+                    ->label('Turno')
+                    ->searchable()
+                    
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('serie.nome')
