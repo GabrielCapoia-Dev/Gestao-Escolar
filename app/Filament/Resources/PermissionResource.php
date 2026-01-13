@@ -67,11 +67,22 @@ class PermissionResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Permissão de execução')
                     ->searchable(),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
-                    ->dateTime('d/m/Y H:i:s')
-                    ->sortable(),
-            ]);
+                    ->label('Criado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->since()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Atualizado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->since()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->defaultSort('updated_at', 'desc');
     }
 
     public static function getPages(): array

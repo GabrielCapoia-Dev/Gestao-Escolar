@@ -35,14 +35,14 @@ class EscolaResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->placeholder('Ex: ESC001'),
-                            
+
                         Forms\Components\TextInput::make('nome')
                             ->label('Nome')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->placeholder('Ex: Escola Municipal João Silva'),
-                            
+
                         Forms\Components\TextInput::make('telefone')
                             ->label('Telefone')
                             ->tel()
@@ -50,7 +50,7 @@ class EscolaResource extends Resource
                             ->unique(ignoreRecord: true)
                             ->mask('(99) 99999-9999')
                             ->placeholder('(00) 00000-0000'),
-                            
+
                         Forms\Components\TextInput::make('email')
                             ->label('E-mail')
                             ->email()
@@ -70,34 +70,37 @@ class EscolaResource extends Resource
                     ->label('Código')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('nome')
                     ->label('Nome')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                    
+
                 Tables\Columns\TextColumn::make('telefone')
                     ->label('Telefone')
                     ->searchable()
                     ->placeholder('Não informado'),
-                    
+
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-mail')
                     ->searchable()
                     ->copyable()
                     ->placeholder('Não informado'),
-                    
+
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
+                    ->label('Criado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
+                    ->since()
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Atualizado em')
+                    ->label('Atualizado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
+                    ->since()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
@@ -112,7 +115,7 @@ class EscolaResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('nome');
+            ->defaultSort('updated_at', 'desc');
     }
 
     public static function getPages(): array

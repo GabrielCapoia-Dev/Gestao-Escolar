@@ -37,7 +37,7 @@ class TurmaResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->placeholder('Ex: TUR001'),
-                            
+
                         Forms\Components\TextInput::make('nome')
                             ->label('Nome')
                             ->required()
@@ -54,7 +54,7 @@ class TurmaResource extends Resource
                             ])
                             ->required()
                             ->placeholder('Selecione o turno'),
-                            
+
                         Forms\Components\Select::make('id_serie')
                             ->label('Série')
                             ->relationship('serie', 'nome')
@@ -74,7 +74,7 @@ class TurmaResource extends Resource
                                     ->maxLength(255),
                             ])
                             ->placeholder('Selecione a série'),
-                            
+
                         Forms\Components\Select::make('id_escola')
                             ->label('Escola')
                             ->relationship('escola', 'nome')
@@ -111,43 +111,55 @@ class TurmaResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('codigo')
-                    ->label('Código')
-                    ->searchable()
-                    ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('nome')
-                    ->label('Nome')
-                    ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('turno')
-                    ->label('Turno')
-                    ->searchable()
-                    
-                    ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('serie.nome')
-                    ->label('Série')
-                    ->searchable()
-                    ->sortable(),
-                    
                 Tables\Columns\TextColumn::make('escola.nome')
                     ->label('Escola')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                    
+
+                Tables\Columns\TextColumn::make('serie.nome')
+                    ->label('Série')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('nome')
+                    ->label('Turma')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('turno')
+                    ->label('Turno')
+                    ->badge()
+                    ->formatStateUsing(fn(string $state) => match ($state) {
+                        'manha'     => 'Manhã',
+                        'tarde'     => 'Tarde',
+                        'noite'     => 'Noite',
+                        'integral'  => 'Integral',
+                        default     => ucfirst($state),
+                    })
+                    ->color(fn(string $state) => match ($state) {
+                        'manha'     => 'info',
+                        'tarde'     => 'warning',
+                        'noite'     => 'gray',
+                        'integral'  => 'success',
+                        default     => 'secondary',
+                    })
+                    ->sortable()
+                    ->searchable(),
+
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
+                    ->label('Criado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
+                    ->since()
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Atualizado em')
+                    ->label('Atualizado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
+                    ->since()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
@@ -156,7 +168,7 @@ class TurmaResource extends Resource
                     ->relationship('serie', 'nome')
                     ->searchable()
                     ->preload(),
-                    
+
                 Tables\Filters\SelectFilter::make('id_escola')
                     ->label('Escola')
                     ->relationship('escola', 'nome')
@@ -172,7 +184,7 @@ class TurmaResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('nome');
+            ->defaultSort('updated_at', 'desc');
     }
 
     public static function getPages(): array

@@ -66,16 +66,10 @@ class DatabaseSeeder extends Seeder
             'Criar Turmas',
             'Editar Turmas',
             'Excluir Turmas',
-            'Listar Alunos',
-            'Criar Alunos',
-            'Editar Alunos',
-            'Excluir Alunos',
-        ];
-
-        $usuarioPermissionsList = [
-            'Listar Turmas',
-            'Listar Alunos',
-            'Editar Alunos',
+            'Listar Professores',
+            'Criar Professores',
+            'Editar Professores',
+            'Excluir Professores',
         ];
 
         $password = "Senha@123";
@@ -93,7 +87,6 @@ class DatabaseSeeder extends Seeder
         // Atribui todas as permissões à role Admin
         $adminRole->syncPermissions($permissionsList);
         $secretarioRole->syncPermissions($secretarioPermissionsList);
-        $usuarioRole->syncPermissions($usuarioPermissionsList);
 
         $adminUser = User::firstOrCreate(
             ['email' => 'admin@admin.com'],
@@ -115,20 +108,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $usuarioUser = User::firstOrCreate(
-            ['email' => 'usuario@usuario.com'],
-            [
-                'name' => 'Usuario',
-                'password' => Hash::make($password),
-                'email_verified_at' => now(),
-                'email_approved' => true
-            ]
-        );
-
         $adminUser->assignRole($adminRole);
         $secretarioUser->assignRole($secretarioRole);
-        $usuarioUser->assignRole($usuarioRole);
-
 
         /**
          * Criar domínios de email

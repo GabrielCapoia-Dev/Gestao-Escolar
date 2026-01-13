@@ -143,16 +143,19 @@ class ProfessorResource extends Resource
                     ->badge()
                     ->color('success'),
 
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
+                    ->label('Criado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
+                    ->since()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Atualizado em')
+                    ->label('Atualizado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
+                    ->since()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
@@ -173,7 +176,7 @@ class ProfessorResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('nome');
+            ->defaultSort('updated_at', 'desc');
     }
 
     public static function getPages(): array

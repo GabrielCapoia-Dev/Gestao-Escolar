@@ -75,9 +75,20 @@ class RoleResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nivel de acesso')
                     ->searchable(),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime('d/m/Y H:i:s')
-                    ->sortable(),
+                    ->label('Criado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->since()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Atualizado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->since()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -90,14 +101,15 @@ class RoleResource extends Resource
                     ->disabled(fn($record) => app(RoleService::class)->bloquearExclusao($record)),
             ])
             ->bulkActions([
-                    Tables\Actions\DeleteBulkAction::make()
-                        ->visible(function(){
-                            $user = Auth::user();
-                            return app(UserService::class)->ehAdmin($user);
-                        })
+                Tables\Actions\DeleteBulkAction::make()
+                    ->visible(function () {
+                        $user = Auth::user();
+                        return app(UserService::class)->ehAdmin($user);
+                    })
             ])
+            ->defaultSort('updated_at', 'desc')
             ->checkIfRecordIsSelectableUsing(fn($record) => app(RoleService::class)->bloquearSelecaoBulkActions($record));
-        }
+    }
 
     public static function getPages(): array
     {

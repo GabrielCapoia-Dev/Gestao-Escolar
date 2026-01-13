@@ -95,8 +95,24 @@ class DominioEmailResource extends Resource
                     ->onColor('success')
                     ->offColor('danger')
                     ->onIcon('heroicon-s-check')
-                    ->offIcon('heroicon-s-x-mark')
+                    ->offIcon('heroicon-s-x-mark'),
+
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Criado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->since()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Atualizado')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->since()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('updated_at', 'desc')
             ->filters([
                 //
             ])
