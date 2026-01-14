@@ -3,16 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProfessorResource\Pages;
-use App\Filament\Resources\ProfessorResource\RelationManagers;
 use App\Models\Professor;
-use App\Models\Turma;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use App\Models\Escola;
-use Filament\Forms\Get;
 
 class ProfessorResource extends Resource
 {
@@ -30,11 +26,19 @@ class ProfessorResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Dados do Professor')
                     ->schema([
+                        Forms\Components\Select::make('id_escola')
+                            ->label('Escola')
+                            ->relationship('escola', 'nome')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->placeholder('Selecione a escola')
+                            ->columnSpanFull(),
+
                         Forms\Components\TextInput::make('matricula')
                             ->label('Matrícula')
                             ->required()
                             ->maxLength(255)
-                            ->unique(ignoreRecord: true)
                             ->placeholder('Ex: PROF001'),
 
                         Forms\Components\TextInput::make('nome')
@@ -46,66 +50,17 @@ class ProfessorResource extends Resource
                         Forms\Components\TextInput::make('email')
                             ->label('E-mail')
                             ->email()
-                            ->required()
                             ->maxLength(255)
-                            ->unique(ignoreRecord: true)
                             ->placeholder('professor@exemplo.com'),
 
                         Forms\Components\TextInput::make('telefone')
                             ->label('Telefone')
                             ->tel()
                             ->maxLength(255)
-                            ->unique(ignoreRecord: true)
                             ->mask('(99) 99999-9999')
                             ->placeholder('(00) 00000-0000'),
                     ])
                     ->columns(2),
-
-                // Forms\Components\Section::make('Turmas')
-                //     ->schema([
-
-                //         // SELECT DE ESCOLA
-                //         Forms\Components\Select::make('escola_id')
-                //             ->label('Escola')
-                //             ->options(
-                //                 Escola::query()
-                //                     ->orderBy('nome')
-                //                     ->pluck('nome', 'id')
-                //             )
-                //             ->searchable()
-                //             ->preload()
-                //             ->reactive()
-                //             ->required()
-                //             ->afterStateUpdated(fn($set) => $set('turmas', []))
-                //             ->dehydrated(false),
-
-                //         // SELECT DE TURMAS (DEPENDENTE)
-                //         Forms\Components\Select::make('turmas')
-                //             ->label('Turmas')
-                //             ->relationship('turmas', 'nome')
-                //             ->multiple()
-                //             ->searchable()
-                //             ->preload()
-                //             ->disabled(fn(Get $get) => blank($get('escola_id')))
-                //             ->options(function (Get $get) {
-                //                 if (!$get('escola_id')) {
-                //                     return [];
-                //                 }
-
-                //                 return Turma::query()
-                //                     ->where('id_escola', $get('escola_id'))
-                //                     ->with('serie')
-                //                     ->orderBy('nome')
-                //                     ->get()
-                //                     ->mapWithKeys(fn($turma) => [
-                //                         $turma->id => "{$turma->nome} - {$turma->serie->nome}",
-                //                     ]);
-                //             })
-                //             ->helperText('Selecione as turmas da escola escolhida'),
-
-                //     ])
-                //     ->columns(2),
-
             ]);
     }
 
@@ -113,12 +68,11 @@ class ProfessorResource extends Resource
     {
         return $table
             ->columns([
-
-
-                Tables\Columns\TextColumn::make('matricula')
-                    ->label('Matrícula')
+                Tables\Columns\TextColumn::make('escola.nome')
+                    ->label('Escola')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->wrap(),
 
                 Tables\Columns\TextColumn::make('matricula')
                     ->label('Matrícula')
@@ -150,9 +104,7 @@ class ProfessorResource extends Resource
                     ->sortable()
                     ->alignCenter()
                     ->badge()
-                    ->color('success')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
+                    ->color('success'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Criado')
@@ -169,6 +121,12 @@ class ProfessorResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('id_escola')
+                    ->label('Escola')
+                    ->relationship('escola', 'nome')
+                    ->searchable()
+                    ->preload(),
+
                 Tables\Filters\SelectFilter::make('turmas')
                     ->label('Turma')
                     ->relationship('turmas', 'nome')
@@ -177,7 +135,63 @@ class ProfessorResource extends Resource
                     ->multiple(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->modalHeading(fn($record) => "Detalhes - {$record->nome}")
+                    ->modalWidth('4xl')
+                    ->infolist([
+                        \Filament\Infolists\Components\Section::make('Informações do Professor')
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('escola.nome')
+                                    ->label('Escola'),
+                                \Filament\Infolists\Components\TextEntry::make('matricula')
+                                    ->label('Matrícula'),
+                                \Filament\Infolists\Components\TextEntry::make('nome')
+                                    ->label('Nome'),
+                                \Filament\Infolists\Components\TextEntry::make('email')
+                                    ->label('E-mail')
+                                    ->copyable(),
+                                \Filament\Infolists\Components\TextEntry::make('telefone')
+                                    ->label('Telefone')
+                                    ->placeholder('Não informado'),
+                            ])
+                            ->columns(3),
+
+                        \Filament\Infolists\Components\Section::make('Turmas')
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('turmas_info')
+                                    ->label('')
+                                    ->formatStateUsing(function ($state, $record) {
+                                        $turmas = \App\Models\Turma::whereHas('componentes', function ($query) use ($record) {
+                                            $query->where('professor_id', $record->id);
+                                        })->with(['serie', 'componentes' => function ($query) use ($record) {
+                                            $query->wherePivot('professor_id', $record->id);
+                                        }])->get();
+
+                                        if ($turmas->isEmpty()) {
+                                            return 'Não leciona em nenhuma turma';
+                                        }
+
+                                        $html = '<div class="space-y-3">';
+
+                                        foreach ($turmas as $turma) {
+                                            $componentes = $turma->componentes->pluck('nome')->join(', ');
+                                            
+                                            $html .= '
+                                                <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                                    <div class="font-semibold text-primary-600 dark:text-primary-400">' . e($turma->serie->nome) . ' - Turma ' . e($turma->nome) . '</div>
+                                                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Componentes: ' . e($componentes) . '</div>
+                                                </div>
+                                            ';
+                                        }
+
+                                        $html .= '</div>';
+
+                                        return new \Illuminate\Support\HtmlString($html);
+                                    })
+                                    ->columnSpanFull(),
+                            ]),
+                    ]),
+
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

@@ -17,17 +17,18 @@ class ManageTurmas extends ManageRecords
                 ->using(function (array $data) {
                     $componentes = $data['componentes'] ?? [];
                     unset($data['componentes']);
-                    
+
                     $turma = static::getModel()::create($data);
-                    
+
                     foreach ($componentes as $componente) {
-                        if (isset($componente['professor_id']) && isset($componente['componente_curricular_id'])) {
+                        if (isset($componente['componente_curricular_id'])) {
                             $turma->componentes()->attach($componente['componente_curricular_id'], [
-                                'professor_id' => $componente['professor_id']
+                                'professor_id' => $componente['professor_id'] ?? null,
+                                'tem_professor' => $componente['tem_professor'] ?? false,
                             ]);
                         }
                     }
-                    
+
                     return $turma;
                 }),
 

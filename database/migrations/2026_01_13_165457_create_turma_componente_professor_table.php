@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('turma_componente_professor', function (Blueprint $table) {
@@ -23,8 +20,11 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->foreignId('professor_id')
+                ->nullable()
                 ->constrained('professores')
                 ->cascadeOnDelete();
+
+            $table->boolean('tem_professor')->default(false);
 
             $table->unique(
                 ['turma_id', 'componente_curricular_id'],
@@ -35,9 +35,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('turma_componente_professor');

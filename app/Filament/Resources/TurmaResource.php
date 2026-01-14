@@ -103,7 +103,7 @@ class TurmaResource extends Resource
                         Forms\Components\Repeater::make('componentes')
                             ->label('')
                             ->schema([
-                                Forms\Components\Grid::make(2)
+                                Forms\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('componente_nome')
                                             ->label('Componente Curricular')
@@ -122,8 +122,17 @@ class TurmaResource extends Resource
                                                     ->toArray();
                                             })
                                             ->searchable()
-                                            ->required()
-                                            ->placeholder('Selecione o professor'),
+                                            ->placeholder('Selecione o professor')
+                                            ->disabled(fn(Get $get) => !$get('tem_professor')),
+
+                                        Forms\Components\Checkbox::make('tem_professor')
+                                            ->label('Tem Professor?')
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                                if (!$state) {
+                                                    $set('professor_id', null);
+                                                }
+                                            }),
 
                                         Forms\Components\Hidden::make('componente_curricular_id'),
                                     ]),
@@ -208,25 +217,22 @@ class TurmaResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->fillForm(function ($record): array {
-                        // Pega TODOS os componentes da série
                         $serie = \App\Models\Serie::with('componentesCurriculares')->find($record->id_serie);
+                        $componentesVinculados = $record->componentes()->withPivot('professor_id', 'tem_professor')->get()->keyBy('id');
 
-                        // Pega os professores já vinculados na turma
-                        $componentesVinculados = $record->componentes()
-                            ->withPivot('professor_id')
-                            ->get()
-                            ->keyBy('id');
-
-                        // Monta o array com todos os componentes da série
                         $componentesData = $serie->componentesCurriculares->map(function ($componente) use ($componentesVinculados) {
                             $professorId = $componentesVinculados->has($componente->id)
                                 ? $componentesVinculados->get($componente->id)->pivot->professor_id
                                 : null;
+                            $temProfessor = $componentesVinculados->has($componente->id)
+                                ? $componentesVinculados->get($componente->id)->pivot->tem_professor
+                                : false;
 
                             return [
                                 'componente_curricular_id' => $componente->id,
                                 'componente_nome' => $componente->nome,
                                 'professor_id' => $professorId,
+                                'tem_professor' => $temProfessor,
                             ];
                         })->toArray();
 
@@ -247,9 +253,10 @@ class TurmaResource extends Resource
 
                         $syncData = [];
                         foreach ($componentes as $componente) {
-                            if (isset($componente['professor_id']) && isset($componente['componente_curricular_id'])) {
+                            if (isset($componente['componente_curricular_id'])) {
                                 $syncData[$componente['componente_curricular_id']] = [
-                                    'professor_id' => $componente['professor_id']
+                                    'professor_id' => $componente['professor_id'] ?? null,
+                                    'tem_professor' => $componente['tem_professor'] ?? false,
                                 ];
                             }
                         }
