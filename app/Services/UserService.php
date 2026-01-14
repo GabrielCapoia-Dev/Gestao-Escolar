@@ -2,9 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\Escola;
 use App\Models\User;
 use App\Models\IgnoredUser;
 use Filament\Forms;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -139,26 +144,35 @@ class UserService
         return $form->schema($this->schemaFormulario());
     }
 
+
     protected function schemaFormulario(): array
     {
         return [
-            Forms\Components\TextInput::make('name')
+
+            TextInput::make('codigo')
+                ->label('Código')
+                ->disabled()
+                ->dehydrated()
+                ->numeric()
+                ->minValue(100),
+
+            TextInput::make('name')
                 ->label('Nome:')
                 ->required()
                 ->minLength(3)
                 ->maxLength(100)
-                ->rule('regex:/^\p{L}+(?:\s\p{L}+)*$/u')
+                ->rule('regex:/^[\p{L}\p{N}]+(?: [\p{L}\p{N}]+)*$/u')
                 ->validationMessages([
                     'regex' => 'Use apenas letras, sem caracteres especiais.',
                 ]),
 
-            Forms\Components\TextInput::make('email')
+            TextInput::make('email')
                 ->label('E-mail')
                 ->unique(ignoreRecord: true)
                 ->email()
                 ->required(),
 
-            Forms\Components\TextInput::make('password')
+            TextInput::make('password')
                 ->label('Senha')
                 ->password()
                 ->revealable()
@@ -181,7 +195,7 @@ class UserService
                 ]),
 
 
-            Forms\Components\Select::make('role')
+            Select::make('role')
                 ->label('Nivel de acesso')
                 ->relationship('roles', 'name', function (Builder $query) {
                     return $this->opcoesDeRoles($query, Auth::user());
@@ -193,7 +207,7 @@ class UserService
                     $this->desabilitarCampoRole(Auth::user(), $record, $context)
                 ),
 
-            Forms\Components\Toggle::make('email_approved')
+            Toggle::make('email_approved')
                 ->label('Verificação de acesso')
                 ->inline(false)
                 ->onColor('success')
@@ -206,9 +220,95 @@ class UserService
                     $this->podeVerToggleAprovacaoEmail(Auth::user(), $record, $context)
                 ),
 
+            Section::make('Vínculo com Escola')
+                ->icon('heroicon-o-identification')
+                ->description('Aqui mostra se o usuário esta vinculado a uma escola.')
+                ->schema([
+                    Select::make('id_escola')
+                        ->label('Escola')
+                        ->options(fn() => $this->opcoesDeEscolasParaCampo(Auth::user()))
+                        ->searchable()
+                        ->preload()
+                        ->afterStateHydrated(function ($state, callable $set, ?User $record, string $operation) {
+                            $set('id_escola', $this->escolaInicialParaForm($record, Auth::user(), $operation));
+                        })
+                        ->default(fn(?User $record) => $this->escolaInicialParaForm($record, Auth::user(), 'create'))
+                        ->disabled(fn(string $operation) => $this->deveTravarCampoEscola(Auth::user(), $operation))
+                        ->dehydrated(true),
+                ])
+                ->visible(
+                    fn(?User $record, string $context) =>
+                    $this->podeVerSecaoEscola(Auth::user(), $record, $context)
+                ),
         ];
     }
 
+    private function podeVerSecaoEscola(?User $user, ?User $record, string $context): bool
+    {
+        if ($context === 'create') return true;
+        if (! $record) return false;
+        if ($record->hasRole('Admin')) return false;
+        if ($user && $record->id === $user->id) return false;
+        if ($context === 'edit') return true;
+        return false;
+    }
+
+    /**
+     * Deve travar o campo Escola?
+     * - Admin: nunca
+     * - Não-admin:
+     *    - create: se tem escola vinculada, TRAVA (para criar apenas na sua escola)
+     *    - edit: sempre TRAVA (não-admin não altera escola do usuário)
+     */
+    public function deveTravarCampoEscola(?User $currentUser, string $context): bool
+    {
+        if ($this->ehAdmin($currentUser)) {
+            return false;
+        }
+
+        if ($context === 'create' && filled($currentUser?->id_escola)) {
+            return true;
+        }
+
+        if ($context === 'edit') {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /** Opções para o select de Escola conforme quem está acessando */
+    public function opcoesDeEscolasParaCampo(?User $currentUser): array
+    {
+        if ($this->ehAdmin($currentUser)) {
+            return Escola::query()->orderBy('nome')->pluck('nome', 'id')->toArray();
+        }
+
+        if (filled($currentUser?->id_escola)) {
+            return Escola::query()->whereKey($currentUser->id_escola)->pluck('nome', 'id')->toArray();
+        }
+
+        return [];
+    }
+
+    /**
+     * Valor inicial do campo Escola:
+     * - Edit: usa a escola do registro se houver; senão cai pro vínculo do usuário atual (se houver)
+     * - Create: se o usuário atual tem escola, usa ela; caso contrário, null (admin escolhe)
+     */
+    public function escolaInicialParaForm(?User $record, ?User $currentUser, string $context): ?int
+    {
+        if ($record && filled($record->id_escola)) {
+            return (int) $record->id_escola;
+        }
+
+        if ($context === 'create') {
+            return $currentUser?->id_escola ?? null;
+        }
+
+        return $currentUser?->id_escola ?? null;
+    }
 
 
     /** Configura a tabela completa (paginações, colunas, filtros, ações, ordenação). */
@@ -222,12 +322,16 @@ class UserService
             ->bulkActions($this->acoesEmMassa($user))
             ->defaultSort('updated_at', 'desc')
             ->striped();
-
     }
 
     protected function colunasTabela(): array
     {
         return [
+            Tables\Columns\TextColumn::make('escola.nome')
+                ->label('Escola')
+                ->wrap()
+                ->sortable()
+                ->searchable(),
 
             Tables\Columns\TextColumn::make('name')
                 ->label('Nome de usuário')
@@ -322,5 +426,19 @@ class UserService
                 })
                 ->visible(fn() => $this->ehAdmin(Auth::user())),
         ];
+    }
+
+    public function aplicarFiltroPorEscolaDoUsuario(Builder $query, ?User $user): Builder
+    {
+        if (! $user) {
+            return $query;
+        }
+        if ($this->ehAdmin($user)) {
+            return $query;
+        }
+        if (! empty($user->id_escola)) {
+            return $query->where('id_escola', $user->id_escola);
+        }
+        return $query;
     }
 }

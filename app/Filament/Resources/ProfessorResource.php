@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ProfessorResource extends Resource
 {
@@ -67,6 +69,11 @@ class ProfessorResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (Builder $query) {
+                $user = Auth::user();
+                return $this->aplicarFiltroPorEscolaDoUsuario($query, $user);
+            })
+
             ->columns([
                 Tables\Columns\TextColumn::make('escola.nome')
                     ->label('Escola')
@@ -175,7 +182,7 @@ class ProfessorResource extends Resource
 
                                         foreach ($turmas as $turma) {
                                             $componentes = $turma->componentes->pluck('nome')->join(', ');
-                                            
+
                                             $html .= '
                                                 <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                                     <div class="font-semibold text-primary-600 dark:text-primary-400">' . e($turma->serie->nome) . ' - Turma ' . e($turma->nome) . '</div>

@@ -11,6 +11,8 @@ use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class TurmaResource extends Resource
 {
@@ -150,6 +152,10 @@ class TurmaResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (Builder $query) {
+                $user = Auth::user();
+                return $this->aplicarFiltroPorEscolaDoUsuario($query, $user);
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('escola.nome')
                     ->label('Escola')
