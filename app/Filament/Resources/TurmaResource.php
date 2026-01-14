@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
+use App\Services\UserService;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -154,7 +155,7 @@ class TurmaResource extends Resource
         return $table
             ->modifyQueryUsing(function (Builder $query) {
                 $user = Auth::user();
-                return $this->aplicarFiltroPorEscolaDoUsuario($query, $user);
+                return app(UserService::class)->aplicarFiltroPorEscolaDoUsuario($query, $user);
             })
             ->columns([
                 Tables\Columns\TextColumn::make('escola.nome')
