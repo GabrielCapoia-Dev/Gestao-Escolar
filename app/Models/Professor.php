@@ -35,8 +35,12 @@ class Professor extends Model
 
     public function turmas()
     {
-        return $this->belongsToMany(Turma::class);
+        return $this->belongsToMany(
+            Turma::class,
+            'turma_componente_professor'
+        )->withPivot('componente_curricular_id');
     }
+
 
     public function componentesPorTurma()
     {

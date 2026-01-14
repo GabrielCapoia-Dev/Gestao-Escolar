@@ -13,10 +13,19 @@ return new class extends Migration
     {
         Schema::create('serie_componente_curricular', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('serie_id')->constrained('series')->cascadeOnDelete();
-            $table->foreignId('componente_curricular_id')->constrained('componentes_curriculares')->cascadeOnDelete();
 
-            $table->unique(['serie_id', 'componente_curricular_id']);
+            $table->foreignId('serie_id')
+                ->constrained('series')
+                ->cascadeOnDelete();
+
+            $table->foreignId('componente_curricular_id')
+                ->constrained('componentes_curriculares')
+                ->cascadeOnDelete();
+
+            $table->unique(
+                ['serie_id', 'componente_curricular_id'],
+                'uniq_serie_componente'
+            );
         });
     }
 

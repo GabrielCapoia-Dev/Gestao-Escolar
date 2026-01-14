@@ -50,6 +50,7 @@ class Turma extends Model
         )->withPivot('professor_id');
     }
 
+
     public function professores()
     {
         return $this->belongsToMany(

@@ -2,59 +2,46 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SerieResource\Pages;
+use App\Filament\Resources\ComponenteCurricularResource\Pages;
 use App\Models\ComponenteCurricular;
-use App\Models\Serie;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class SerieResource extends Resource
+class ComponenteCurricularResource extends Resource
 {
-    protected static ?string $model = Serie::class;
+    protected static ?string $model = ComponenteCurricular::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
-    public static ?string $modelLabel = 'Série';
+    protected static ?string $navigationIcon = 'heroicon-o-book-open';
     protected static ?string $navigationGroup = "Gestão Escolar";
-    public static ?string $pluralModelLabel = 'Séries';
-    public static ?string $slug = 'series';
+    public static ?string $modelLabel = 'Componente Curricular';
+    public static ?string $pluralModelLabel = 'Componentes Curriculares';
+
+    protected static ?string $slug = 'componentes-curriculares';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Dados da Série')
+                Forms\Components\Section::make('Dados do Componente')
                     ->schema([
                         Forms\Components\TextInput::make('codigo')
                             ->label('Código')
                             ->required()
-                            ->maxLength(255)
                             ->unique(ignoreRecord: true)
-                            ->placeholder('Ex: SER001'),
+                            ->maxLength(255)
+                            ->placeholder('Ex: matematica'),
 
                         Forms\Components\TextInput::make('nome')
                             ->label('Nome')
                             ->required()
-                            ->maxLength(255)
                             ->unique(ignoreRecord: true)
-                            ->placeholder('Ex: 1º Ano, 2º Ano, etc.'),
+                            ->maxLength(255)
+                            ->placeholder('Ex: Matemática'),
                     ])
                     ->columns(2),
-
-                Forms\Components\Section::make('Componentes Curriculares')
-                    ->schema([
-                        Forms\Components\Select::make('componentesCurriculares')
-                            ->label('Componentes')
-                            ->relationship('componentesCurriculares', 'nome')
-                            ->multiple()
-                            ->preload()
-                            ->searchable()
-                            ->placeholder('Selecione os componentes desta série')
-                            ->helperText('Ex: Português, Matemática, História...')
-                            ->columnSpanFull(),
-                    ]),
             ]);
     }
 
@@ -72,18 +59,13 @@ class SerieResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('componentesCurriculares.nome')
-                    ->label('Componentes')
+                Tables\Columns\TextColumn::make('series.nome')
+                    ->label('Séries Vinculadas')
                     ->badge()
                     ->separator(',')
                     ->wrap()
-                    ->limit(10)
+                    ->toggleable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('turmas_count')
-                    ->label('Qtd. Turmas')
-                    ->counts('turmas')
-                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Criado')
@@ -111,13 +93,13 @@ class SerieResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('updated_at', 'desc');
+            ->defaultSort('nome');
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageSeries::route('/'),
+            'index' => Pages\ManageComponenteCurriculars::route('/'),
         ];
     }
 }

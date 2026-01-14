@@ -13,20 +13,24 @@ class ManageTurmas extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->using(function (array $data) {
+                    $componentes = $data['componentes'] ?? [];
+                    unset($data['componentes']);
+                    
+                    $turma = static::getModel()::create($data);
+                    
+                    foreach ($componentes as $componente) {
+                        if (isset($componente['professor_id']) && isset($componente['componente_curricular_id'])) {
+                            $turma->componentes()->attach($componente['componente_curricular_id'], [
+                                'professor_id' => $componente['professor_id']
+                            ]);
+                        }
+                    }
+                    
+                    return $turma;
+                }),
+
         ];
-    }
-
-    protected function afterCreate(): void
-    {
-        $turma = $this->record;
-
-        $componentes = $turma->serie->componentesCurriculares;
-
-        foreach ($componentes as $componente) {
-            $turma->componentes()->attach($componente->id, [
-                'professor_id' => null,
-            ]);
-        }
     }
 }

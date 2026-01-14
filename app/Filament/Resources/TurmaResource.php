@@ -3,17 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TurmaResource\Pages;
-use App\Filament\Resources\TurmaResource\RelationManagers;
 use App\Models\Turma;
-use App\Models\Serie;
-use App\Models\Escola;
+use App\Models\Professor;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TurmaResource extends Resource
 {
@@ -31,18 +28,54 @@ class TurmaResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Dados da Turma')
                     ->schema([
-                        Forms\Components\TextInput::make('codigo')
-                            ->label('Código')
+                        Forms\Components\Select::make('id_escola')
+                            ->label('Escola')
+                            ->relationship('escola', 'nome')
+                            ->searchable()
+                            ->preload()
                             ->required()
-                            ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->placeholder('Ex: TUR001'),
+                            ->live()
+                            ->placeholder('Selecione a escola')
+                            ->columnSpanFull(),
+
+                        Forms\Components\Select::make('id_serie')
+                            ->label('Série')
+                            ->relationship('serie', 'nome')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if (!$state) {
+                                    $set('componentes', []);
+                                    return;
+                                }
+
+                                $serie = \App\Models\Serie::with('componentesCurriculares')->find($state);
+                                if (!$serie) {
+                                    $set('componentes', []);
+                                    return;
+                                }
+
+                                $componentes = $serie->componentesCurriculares->map(function ($componente) {
+                                    return [
+                                        'componente_curricular_id' => $componente->id,
+                                        'componente_nome' => $componente->nome,
+                                        'professor_id' => null,
+                                    ];
+                                })->toArray();
+
+                                $set('componentes', $componentes);
+                            })
+                            ->placeholder('Selecione a série')
+                            ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('nome')
-                            ->label('Nome')
+                            ->label('Letra da Turma')
                             ->required()
                             ->maxLength(255)
-                            ->placeholder('Ex: Turma A, Turma B, etc.'),
+                            ->placeholder('Ex: A, B, C')
+                            ->hint('Apenas a letra/identificador da turma'),
 
                         Forms\Components\Select::make('turno')
                             ->label('Turno')
@@ -55,55 +88,53 @@ class TurmaResource extends Resource
                             ->required()
                             ->placeholder('Selecione o turno'),
 
-                        Forms\Components\Select::make('id_serie')
-                            ->label('Série')
-                            ->relationship('serie', 'nome')
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('codigo')
-                                    ->label('Código')
-                                    ->required()
-                                    ->unique()
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('nome')
-                                    ->label('Nome')
-                                    ->required()
-                                    ->unique()
-                                    ->maxLength(255),
-                            ])
-                            ->placeholder('Selecione a série'),
-
-                        Forms\Components\Select::make('id_escola')
-                            ->label('Escola')
-                            ->relationship('escola', 'nome')
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('codigo')
-                                    ->label('Código')
-                                    ->required()
-                                    ->unique()
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('nome')
-                                    ->label('Nome')
-                                    ->required()
-                                    ->unique()
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('telefone')
-                                    ->label('Telefone')
-                                    ->tel()
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('email')
-                                    ->label('E-mail')
-                                    ->email()
-                                    ->maxLength(255),
-                            ])
-                            ->placeholder('Selecione a escola'),
+                        Forms\Components\Hidden::make('codigo')
+                            ->default(fn() => 'TUR' . str_pad(Turma::max('id') + 1, 3, '0', STR_PAD_LEFT)),
                     ])
                     ->columns(2),
+
+                Forms\Components\Section::make('Professores por Componente')
+                    ->schema([
+                        Forms\Components\Placeholder::make('aviso')
+                            ->label('')
+                            ->content('Selecione a escola e a série para carregar os componentes curriculares')
+                            ->visible(fn(Get $get) => !$get('id_serie') || !$get('id_escola')),
+
+                        Forms\Components\Repeater::make('componentes')
+                            ->label('')
+                            ->schema([
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('componente_nome')
+                                            ->label('Componente Curricular')
+                                            ->disabled()
+                                            ->dehydrated(false),
+
+                                        Forms\Components\Select::make('professor_id')
+                                            ->label('Professor')
+                                            ->options(function (Get $get) {
+                                                $escolaId = $get('../../id_escola');
+                                                if (!$escolaId) {
+                                                    return [];
+                                                }
+                                                return Professor::where('id_escola', $escolaId)
+                                                    ->pluck('nome', 'id')
+                                                    ->toArray();
+                                            })
+                                            ->searchable()
+                                            ->required()
+                                            ->placeholder('Selecione o professor'),
+
+                                        Forms\Components\Hidden::make('componente_curricular_id'),
+                                    ]),
+                            ])
+                            ->visible(fn(Get $get) => $get('id_serie') && $get('id_escola'))
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->columnSpanFull(),
+                    ])
+                    ->visible(fn(Get $get) => $get('id_serie') && $get('id_escola')),
             ]);
     }
 
@@ -131,22 +162,21 @@ class TurmaResource extends Resource
                     ->label('Turno')
                     ->badge()
                     ->formatStateUsing(fn(string $state) => match ($state) {
-                        'manha'     => 'Manhã',
-                        'tarde'     => 'Tarde',
-                        'noite'     => 'Noite',
-                        'integral'  => 'Integral',
-                        default     => ucfirst($state),
+                        'manha' => 'Manhã',
+                        'tarde' => 'Tarde',
+                        'noite' => 'Noite',
+                        'integral' => 'Integral',
+                        default => ucfirst($state),
                     })
                     ->color(fn(string $state) => match ($state) {
-                        'manha'     => 'info',
-                        'tarde'     => 'warning',
-                        'noite'     => 'gray',
-                        'integral'  => 'success',
-                        default     => 'secondary',
+                        'manha' => 'info',
+                        'tarde' => 'warning',
+                        'noite' => 'gray',
+                        'integral' => 'success',
+                        default => 'secondary',
                     })
                     ->sortable()
                     ->searchable(),
-
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Criado')
@@ -176,7 +206,59 @@ class TurmaResource extends Resource
                     ->preload(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->fillForm(function ($record): array {
+                        // Pega TODOS os componentes da série
+                        $serie = \App\Models\Serie::with('componentesCurriculares')->find($record->id_serie);
+
+                        // Pega os professores já vinculados na turma
+                        $componentesVinculados = $record->componentes()
+                            ->withPivot('professor_id')
+                            ->get()
+                            ->keyBy('id');
+
+                        // Monta o array com todos os componentes da série
+                        $componentesData = $serie->componentesCurriculares->map(function ($componente) use ($componentesVinculados) {
+                            $professorId = $componentesVinculados->has($componente->id)
+                                ? $componentesVinculados->get($componente->id)->pivot->professor_id
+                                : null;
+
+                            return [
+                                'componente_curricular_id' => $componente->id,
+                                'componente_nome' => $componente->nome,
+                                'professor_id' => $professorId,
+                            ];
+                        })->toArray();
+
+                        return [
+                            'codigo' => $record->codigo,
+                            'nome' => $record->nome,
+                            'turno' => $record->turno,
+                            'id_serie' => $record->id_serie,
+                            'id_escola' => $record->id_escola,
+                            'componentes' => $componentesData,
+                        ];
+                    })
+                    ->using(function ($record, array $data) {
+                        $componentes = $data['componentes'] ?? [];
+                        unset($data['componentes']);
+
+                        $record->update($data);
+
+                        $syncData = [];
+                        foreach ($componentes as $componente) {
+                            if (isset($componente['professor_id']) && isset($componente['componente_curricular_id'])) {
+                                $syncData[$componente['componente_curricular_id']] = [
+                                    'professor_id' => $componente['professor_id']
+                                ];
+                            }
+                        }
+
+                        $record->componentes()->sync($syncData);
+
+                        return $record;
+                    }),
+
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
@@ -185,12 +267,6 @@ class TurmaResource extends Resource
                 ]),
             ])
             ->defaultSort('updated_at', 'desc');
-    }
-    public static function getRelations(): array
-    {
-        return [
-            RelationManagers\ComponentesRelationManager::class,
-        ];
     }
 
     public static function getPages(): array

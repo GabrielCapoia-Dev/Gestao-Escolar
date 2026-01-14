@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class SerieFactory extends Factory
 {
+    protected static int $index = 0;
+
     public function definition(): array
     {
-        static $series = [
+        $series = [
             ['codigo' => 'SER001', 'nome' => 'Berçário'],
             ['codigo' => 'SER002', 'nome' => 'Maternal I'],
             ['codigo' => 'SER003', 'nome' => 'Maternal II'],
@@ -28,6 +30,6 @@ class SerieFactory extends Factory
             ['codigo' => 'SER017', 'nome' => '3º Ano EM'],
         ];
 
-        return fake()->randomElement($series);
+        return $series[self::$index++];
     }
 }

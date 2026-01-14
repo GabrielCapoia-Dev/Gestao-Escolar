@@ -14,12 +14,22 @@ return new class extends Migration
         Schema::create('turma_componente_professor', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('turma_id')->constrained('turmas')->cascadeOnDelete();
-            $table->foreignId('componente_curricular_id')->constrained('componentes_curriculares')->cascadeOnDelete();
-            $table->foreignId('professor_id')->constrained('professores')->cascadeOnDelete();
+            $table->foreignId('turma_id')
+                ->constrained('turmas')
+                ->cascadeOnDelete();
 
-            // 🔒 Um professor por componente na turma
-            $table->unique(['turma_id', 'componente_curricular_id']);
+            $table->foreignId('componente_curricular_id')
+                ->constrained('componentes_curriculares')
+                ->cascadeOnDelete();
+
+            $table->foreignId('professor_id')
+                ->constrained('professores')
+                ->cascadeOnDelete();
+
+            $table->unique(
+                ['turma_id', 'componente_curricular_id'],
+                'uniq_turma_componente'
+            );
 
             $table->timestamps();
         });

@@ -146,7 +146,7 @@ class DatabaseSeeder extends Seeder
 
         // 2. Criar Séries (17 séries - da educação infantil ao ensino médio)
         $this->command->info('Criando séries...');
-        $series = Serie::factory(10)->create();
+        $series = Serie::factory(17)->create();
 
         $this->command->info('Criando componentes curriculares...');
         $this->call(ComponenteCurricularSeeder::class);
