@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\ComponenteCurricular;
+use App\Policies\ComponenteCurricularPolicy;
 use App\Models\DominioEmail;
 use App\Models\Escola;
 use App\Models\Permission;
@@ -44,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Serie::class, SeriePolicy::class);
         Gate::policy(Turma::class, TurmaPolicy::class);
         Gate::policy(Professor::class, ProfessorPolicy::class);
+        Gate::policy(ComponenteCurricular::class, ComponenteCurricularPolicy::class);
 
         Gate::define('admin-only', function ($user) {
             return $user->hasRole('Admin');

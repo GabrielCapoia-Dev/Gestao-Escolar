@@ -55,21 +55,17 @@ class DatabaseSeeder extends Seeder
             'Criar Professores',
             'Editar Professores',
             'Excluir Professores',
+            'Listar Componentes Curriculares',
+            'Criar Componentes Curriculares',
+            'Editar Componentes Curriculares',
+            'Excluir Componentes Curriculares',
         ];
 
         $secretarioPermissionsList = [
-            'Listar Usuários',
-            'Criar Usuários',
-            'Editar Usuários',
-            'Excluir Usuários',
             'Listar Turmas',
             'Criar Turmas',
             'Editar Turmas',
             'Excluir Turmas',
-            'Listar Professores',
-            'Criar Professores',
-            'Editar Professores',
-            'Excluir Professores',
         ];
 
         $password = "Senha@123";

@@ -113,6 +113,7 @@ class TurmaResource extends Resource
                                             ->disabled()
                                             ->dehydrated(false),
 
+
                                         Forms\Components\Select::make('professor_id')
                                             ->label('Professor')
                                             ->options(function (Get $get) {
@@ -126,17 +127,18 @@ class TurmaResource extends Resource
                                             })
                                             ->searchable()
                                             ->placeholder('Selecione o professor')
-                                            ->disabled(fn(Get $get) => !$get('tem_professor')),
+                                            ->disabled(fn(Get $get) => $get('tem_professor')) // Se TRUE (não tem), desabilita
+                                            ->dehydrated(fn(Get $get) => !$get('tem_professor')), // Só salva se tiver professor
 
                                         Forms\Components\Checkbox::make('tem_professor')
-                                            ->label('Tem Professor?')
+                                            ->label('Não tem Professor?')
+                                            ->default(false)
                                             ->live()
                                             ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                                if (!$state) {
+                                                if ($state) { // Se marcou "não tem" (TRUE)
                                                     $set('professor_id', null);
                                                 }
                                             }),
-
                                         Forms\Components\Hidden::make('componente_curricular_id'),
                                     ]),
                             ])
