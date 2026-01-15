@@ -15,7 +15,7 @@ class TurmaFactory extends Factory
         return [
             'codigo' => 'TUR' . str_pad($counter++, 3, '0', STR_PAD_LEFT),
             'nome' => fake()->randomElement(['A', 'B', 'C', 'D', 'E']),
-            'turno' => fake()->randomElement(['manha', 'tarde', 'noite', 'integral']),
+            'turno' => fake()->randomElement(['manha', 'tarde', 'noite']),
             'id_serie' => Serie::inRandomOrder()->value('id') ?? Serie::factory(),
             'id_escola' => Escola::inRandomOrder()->value('id') ?? Escola::factory(),
         ];

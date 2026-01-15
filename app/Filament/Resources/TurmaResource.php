@@ -86,7 +86,6 @@ class TurmaResource extends Resource
                                 'manha' => 'Manhã',
                                 'tarde' => 'Tarde',
                                 'noite' => 'Noite',
-                                'integral' => 'Integral',
                             ])
                             ->required()
                             ->placeholder('Selecione o turno'),

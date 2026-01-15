@@ -3,14 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\DominioEmail;
-use App\Models\Escola;
-use App\Models\Professor;
-use App\Models\Serie;
-use App\Models\Turma;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
@@ -133,62 +128,70 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // 1. Criar Escolas
-        $this->command->info('Criando escolas...');
-        $escolas = Escola::factory(3)->create();
+        $this->command->info('Analisando planilhas...');
+        $this->call(AlunoPlanilhaSeeder::class);
+        $this->command->info('Planilhas processadas com sucesso!✅');
 
-        // 2. Criar Séries
-        $this->command->info('Criando séries...');
-        $series = Serie::factory(17)->create();
+        $this->command->info('Analisando planilhas...');
+        $this->call(ProfessorPlanilhaSeeder::class);
+        $this->command->info('Planilhas processadas com sucesso!✅');
+        
+        // // 1. Criar Escolas
+        // $this->command->info('Criando escolas...');
+        // $escolas = Escola::factory(3)->create();
 
-        // 3. Criar Componentes Curriculares
-        $this->command->info('Criando componentes curriculares...');
-        $this->call(ComponenteCurricularSeeder::class);
+        // // 2. Criar Séries
+        // $this->command->info('Criando séries...');
+        // $series = Serie::factory(17)->create();
 
-        // 4. Criar Professores
-        $this->command->info('Criando professores...');
-        $professores = Professor::factory(30)->create();
+        // // 3. Criar Componentes Curriculares
+        // $this->command->info('Criando componentes curriculares...');
+        // $this->call(ComponenteCurricularSeeder::class);
 
-        // 5. Criar Turmas
-        $this->command->info('Criando turmas...');
-        $turmas = Turma::factory(20)->create();
+        // // 4. Criar Professores
+        // $this->command->info('Criando professores...');
+        // $professores = Professor::factory(30)->create();
 
-        // 6. Associar Professores aos Componentes das Turmas
-        $this->command->info('Associando professores aos componentes das turmas...');
-        foreach ($turmas as $turma) {
-            $componentes = $turma->serie->componentesCurriculares;
-            $professoresDaEscola = Professor::where('id_escola', $turma->id_escola)->get();
+        // // 5. Criar Turmas
+        // $this->command->info('Criando turmas...');
+        // $turmas = Turma::factory(20)->create();
+
+        // // 6. Associar Professores aos Componentes das Turmas
+        // $this->command->info('Associando professores aos componentes das turmas...');
+        // foreach ($turmas as $turma) {
+        //     $componentes = $turma->serie->componentesCurriculares;
+        //     $professoresDaEscola = Professor::where('id_escola', $turma->id_escola)->get();
             
-            foreach ($componentes as $componente) {
-                // 80% de chance de ter professor, 20% de chance de ficar vago
-                $temProfessor = rand(1, 100) <= 80;
+        //     foreach ($componentes as $componente) {
+        //         // 80% de chance de ter professor, 20% de chance de ficar vago
+        //         $temProfessor = rand(1, 100) <= 80;
                 
-                if ($temProfessor && $professoresDaEscola->isNotEmpty()) {
-                    $professorAleatorio = $professoresDaEscola->random();
+        //         if ($temProfessor && $professoresDaEscola->isNotEmpty()) {
+        //             $professorAleatorio = $professoresDaEscola->random();
                     
-                    $turma->componentes()->attach($componente->id, [
-                        'professor_id' => $professorAleatorio->id,
-                        'tem_professor' => true,
-                    ]);
-                } else {
-                    // Componente sem professor
-                    $turma->componentes()->attach($componente->id, [
-                        'professor_id' => null,
-                        'tem_professor' => false,
-                    ]);
-                }
-            }
-        }
+        //             $turma->componentes()->attach($componente->id, [
+        //                 'professor_id' => $professorAleatorio->id,
+        //                 'tem_professor' => true,
+        //             ]);
+        //         } else {
+        //             // Componente sem professor
+        //             $turma->componentes()->attach($componente->id, [
+        //                 'professor_id' => null,
+        //                 'tem_professor' => false,
+        //             ]);
+        //         }
+        //     }
+        // }
 
-        $this->command->info('✅ Dados populados com sucesso!');
-        $this->command->info("📊 Resumo:");
-        $this->command->info("   - Escolas: " . Escola::count());
-        $this->command->info("   - Séries: " . Serie::count());
-        $this->command->info("   - Turmas: " . Turma::count());
-        $this->command->info("   - Professores: " . Professor::count());
-        $this->command->info("   - Componentes Curriculares: " . \App\Models\ComponenteCurricular::count());
-        $this->command->info("   - Relacionamentos Turma-Componente-Professor: " . DB::table('turma_componente_professor')->count());
-        $this->command->info("   - Componentes COM professor: " . DB::table('turma_componente_professor')->where('tem_professor', true)->count());
-        $this->command->info("   - Componentes SEM professor: " . DB::table('turma_componente_professor')->where('tem_professor', false)->count());
+        // $this->command->info('✅ Dados populados com sucesso!');
+        // $this->command->info("📊 Resumo:");
+        // $this->command->info("   - Escolas: " . Escola::count());
+        // $this->command->info("   - Séries: " . Serie::count());
+        // $this->command->info("   - Turmas: " . Turma::count());
+        // $this->command->info("   - Professores: " . Professor::count());
+        // $this->command->info("   - Componentes Curriculares: " . \App\Models\ComponenteCurricular::count());
+        // $this->command->info("   - Relacionamentos Turma-Componente-Professor: " . DB::table('turma_componente_professor')->count());
+        // $this->command->info("   - Componentes COM professor: " . DB::table('turma_componente_professor')->where('tem_professor', true)->count());
+        // $this->command->info("   - Componentes SEM professor: " . DB::table('turma_componente_professor')->where('tem_professor', false)->count());
     }
 }

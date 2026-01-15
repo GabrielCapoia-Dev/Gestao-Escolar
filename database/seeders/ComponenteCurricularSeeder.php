@@ -16,9 +16,8 @@ class ComponenteCurricularSeeder extends Seeder
             'historia' => 'História',
             'geografia' => 'Geografia',
             'ciencias' => 'Ciências',
-            'arte' => 'Arte',
+            'arte_ensino_religioso' => 'Arte e Ensino Religioso',
             'educacao_fisica' => 'Educação Física',
-            'ensino_religioso' => 'Ensino Religioso',
             'ingles' => 'Inglês',
             'corpo_gesto_movimento' => 'Corpo, Gesto e Movimento',
         ];
@@ -34,18 +33,17 @@ class ComponenteCurricularSeeder extends Seeder
 
         // Educação Infantil
         $infantilSeries = Serie::whereIn('nome', [
-            'Berçário',
-            'Maternal I',
-            'Maternal II',
-            'Jardim I',
-            'Jardim II',
+            'INFANTIL 4',
+            'INFANTIL 5',
+            'JARDIM',
+            'MATERNAL I',
+            'MATERNAL II',
         ])->get();
 
         foreach ($infantilSeries as $serie) {
             $serie->componentesCurriculares()->sync([
                 $componentes['corpo_gesto_movimento']->id,
-                $componentes['arte']->id,
-                $componentes['ensino_religioso']->id,
+                $componentes['arte_ensino_religioso']->id,
             ]);
         }
 
@@ -59,7 +57,6 @@ class ComponenteCurricularSeeder extends Seeder
                 $componentes['historia']->id,
                 $componentes['geografia']->id,
                 $componentes['ciencias']->id,
-                $componentes['arte']->id,
                 $componentes['educacao_fisica']->id,
             ]);
         }
