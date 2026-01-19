@@ -3,13 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TurmaResource\Pages;
+use AlperenErsoy\FilamentExport\Actions\FilamentExportBulkAction;
 use App\Models\Turma;
 use App\Models\Professor;
+use App\Services\UserService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
-use App\Services\UserService;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,6 +28,9 @@ class TurmaResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $userService = app(UserService::class);
+        $ehAdmin = $userService->ehAdmin(Auth::user());
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Dados da Turma')
@@ -39,6 +43,7 @@ class TurmaResource extends Resource
                             ->required()
                             ->live()
                             ->placeholder('Selecione a escola')
+                            ->disabled(fn(?Turma $record) => $record !== null && !$ehAdmin)
                             ->columnSpanFull(),
 
                         Forms\Components\Select::make('id_serie')
@@ -71,6 +76,7 @@ class TurmaResource extends Resource
                                 $set('componentes', $componentes);
                             })
                             ->placeholder('Selecione a série')
+                            ->disabled(fn(?Turma $record) => $record !== null && !$ehAdmin)
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('nome')
@@ -78,7 +84,8 @@ class TurmaResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Ex: A, B, C')
-                            ->hint('Apenas a letra/identificador da turma'),
+                            ->hint('Apenas a letra/identificador da turma')
+                            ->disabled(fn(?Turma $record) => $record !== null && !$ehAdmin),
 
                         Forms\Components\Select::make('turno')
                             ->label('Turno')
@@ -86,9 +93,11 @@ class TurmaResource extends Resource
                                 'manha' => 'Manhã',
                                 'tarde' => 'Tarde',
                                 'noite' => 'Noite',
+                                'integral' => 'Integral',
                             ])
                             ->required()
-                            ->placeholder('Selecione o turno'),
+                            ->placeholder('Selecione o turno')
+                            ->disabled(fn(?Turma $record) => $record !== null && !$ehAdmin),
 
                         Forms\Components\Hidden::make('codigo')
                             ->default(fn() => 'TUR' . str_pad(Turma::max('id') + 1, 3, '0', STR_PAD_LEFT)),
@@ -112,7 +121,6 @@ class TurmaResource extends Resource
                                             ->disabled()
                                             ->dehydrated(false),
 
-
                                         Forms\Components\Select::make('professor_id')
                                             ->label('Professor')
                                             ->options(function (Get $get) {
@@ -126,15 +134,15 @@ class TurmaResource extends Resource
                                             })
                                             ->searchable()
                                             ->placeholder('Selecione o professor')
-                                            ->disabled(fn(Get $get) => $get('tem_professor')) // Se TRUE (não tem), desabilita
-                                            ->dehydrated(fn(Get $get) => !$get('tem_professor')), // Só salva se tiver professor
+                                            ->disabled(fn(Get $get) => $get('tem_professor'))
+                                            ->dehydrated(fn(Get $get) => !$get('tem_professor')),
 
                                         Forms\Components\Checkbox::make('tem_professor')
                                             ->label('Não tem Professor?')
                                             ->default(false)
                                             ->live()
                                             ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                                if ($state) { // Se marcou "não tem" (TRUE)
+                                                if ($state) {
                                                     $set('professor_id', null);
                                                 }
                                             }),
@@ -156,8 +164,7 @@ class TurmaResource extends Resource
         return $table
             ->modifyQueryUsing(function (Builder $query) {
                 $user = Auth::user();
-                return app(UserService::class)->aplicarFiltroPorEscolaDoUsuario($query, $user);
-            })
+                })
             ->columns([
                 Tables\Columns\TextColumn::make('escola.nome')
                     ->label('Escola')
@@ -192,21 +199,12 @@ class TurmaResource extends Resource
                         'integral' => 'success',
                         default => 'secondary',
                     })
-                    ->sortable()
-                    ->searchable(),
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado')
+                    ->label('Criado em')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
-                    ->since()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Atualizado')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->since()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
@@ -221,6 +219,15 @@ class TurmaResource extends Resource
                     ->relationship('escola', 'nome')
                     ->searchable()
                     ->preload(),
+
+                Tables\Filters\SelectFilter::make('turno')
+                    ->label('Turno')
+                    ->options([
+                        'manha' => 'Manhã',
+                        'tarde' => 'Tarde',
+                        'noite' => 'Noite',
+                        'integral' => 'Integral',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
@@ -277,11 +284,12 @@ class TurmaResource extends Resource
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                FilamentExportBulkAction::make('exportar_filtrados')
+                    ->label('Exportar XLSX')
+                    ->defaultFormat('xlsx')
+                    ->directDownload(),
             ])
-            ->defaultSort('updated_at', 'desc');
+            ->defaultSort('escola.nome');
     }
 
     public static function getPages(): array

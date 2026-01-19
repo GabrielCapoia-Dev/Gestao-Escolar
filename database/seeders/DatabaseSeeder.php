@@ -58,9 +58,7 @@ class DatabaseSeeder extends Seeder
 
         $secretarioPermissionsList = [
             'Listar Turmas',
-            'Criar Turmas',
             'Editar Turmas',
-            'Excluir Turmas',
         ];
 
         $password = "Senha@123";
@@ -135,7 +133,13 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Analisando planilhas...');
         $this->call(ProfessorPlanilhaSeeder::class);
         $this->command->info('Planilhas processadas com sucesso!✅');
-        
+
+        $this->command->info('Criando componentes curriculares...');
+        $this->call(ComponenteCurricularSeeder::class);
+
+        $this->command->info('Criando secretários...');
+        $this->call(SecretarioUnidadesSeeder::class);
+
         // // 1. Criar Escolas
         // $this->command->info('Criando escolas...');
         // $escolas = Escola::factory(3)->create();
@@ -161,14 +165,14 @@ class DatabaseSeeder extends Seeder
         // foreach ($turmas as $turma) {
         //     $componentes = $turma->serie->componentesCurriculares;
         //     $professoresDaEscola = Professor::where('id_escola', $turma->id_escola)->get();
-            
+
         //     foreach ($componentes as $componente) {
         //         // 80% de chance de ter professor, 20% de chance de ficar vago
         //         $temProfessor = rand(1, 100) <= 80;
-                
+
         //         if ($temProfessor && $professoresDaEscola->isNotEmpty()) {
         //             $professorAleatorio = $professoresDaEscola->random();
-                    
+
         //             $turma->componentes()->attach($componente->id, [
         //                 'professor_id' => $professorAleatorio->id,
         //                 'tem_professor' => true,

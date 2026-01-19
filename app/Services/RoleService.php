@@ -11,8 +11,6 @@ class RoleService
     {
         $roles = [
             'Admin',
-            'Secretario',
-            'Usuario'
         ];
 
         foreach ($roles as $role) {
@@ -33,7 +31,6 @@ class RoleService
         $roles = [
             'Admin',
             'Secretario',
-            'Usuario'
         ];
 
         foreach ($roles as $role) {
@@ -50,7 +47,6 @@ class RoleService
         $roles = [
             'Admin',
             'Secretario',
-            'Usuario'
         ];
 
         foreach ($roles as $role) {
@@ -64,7 +60,7 @@ class RoleService
 
     public function bloquearSelecaoBulkActions($record): bool
     {
-        $bloqueados = ['Admin', 'Secretario', 'Usuario'];
+        $bloqueados = ['Admin', 'Secretario'];
         return !in_array($record->name, $bloqueados);
     }
     

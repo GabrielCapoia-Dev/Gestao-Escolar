@@ -93,7 +93,6 @@ class ProfessorPlanilhaSeeder extends Seeder
 
             if ($professor->wasRecentlyCreated) {
                 $professoresCriados++;
-                $this->command->info("✅ Professor criado: {$nome} ({$matricula}) - {$escola->nome}");
             }
         }
 

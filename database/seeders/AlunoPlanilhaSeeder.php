@@ -64,6 +64,9 @@ class AlunoPlanilhaSeeder extends Seeder
             $turmaLetra  = trim($linha[$idxTurma] ?? '');
             $turno       = trim($linha[$idxTurno] ?? '');
 
+            $turno = trim($linha[$idxTurno] ?? '');
+            $turno = strtolower($turno);
+
             // Ignora "Sem Seriação" e linhas incompletas
             if ($escolaNome === '' || $seriacao === '' || $seriacao === 'Sem Seriação' || $turmaLetra === '' || $turno === '') {
                 $linhasIgnoradas++;
@@ -91,22 +94,31 @@ class AlunoPlanilhaSeeder extends Seeder
 
             $escola = $escolasCache[$escolaNome];
 
-            // 2. SÉRIE
-            if (!isset($seriesCache[$seriacao])) {
+            // 2. SÉRIE (regra do integral → Base)
+            $serieNome = $seriacao;
+
+            if ($turno === 'integral') {
+                $serieNome = "{$seriacao} - Base";
+            }
+
+            if (!isset($seriesCache[$serieNome])) {
+
                 $serie = Serie::firstOrCreate(
-                    ['nome' => $seriacao],
-                    ['codigo' => 'SER' . str_pad((Serie::max('id') ?? 0) + 1, 3, '0', STR_PAD_LEFT)]
+                    ['nome' => $serieNome],
+                    [
+                        'codigo' => 'SER' . str_pad((Serie::max('id') ?? 0) + 1, 3, '0', STR_PAD_LEFT),
+                    ]
                 );
 
                 if ($serie->wasRecentlyCreated) {
                     $seriesCriadas++;
-                    $this->command->info("✅ Série criada: {$seriacao}");
+                    $this->command->info("✅ Série criada: {$serieNome}");
                 }
 
-                $seriesCache[$seriacao] = $serie;
+                $seriesCache[$serieNome] = $serie;
             }
 
-            $serie = $seriesCache[$seriacao];
+            $serie = $seriesCache[$serieNome];
 
             // 3. TURMA
             $turmaKey = "{$escola->id}|{$serie->id}|{$turmaLetra}|{$turno}";

@@ -78,19 +78,20 @@ class ProfessorResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('escola.nome')
                     ->label('Escola')
-                    ->searchable()
                     ->sortable()
                     ->wrap(),
 
                 Tables\Columns\TextColumn::make('matricula')
                     ->label('Matrícula')
                     ->searchable()
+                    ->copyable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('nome')
                     ->label('Nome')
                     ->searchable()
                     ->sortable()
+                    ->copyable()
                     ->wrap(),
 
                 Tables\Columns\TextColumn::make('email')
@@ -152,9 +153,11 @@ class ProfessorResource extends Resource
                                 \Filament\Infolists\Components\TextEntry::make('escola.nome')
                                     ->label('Escola'),
                                 \Filament\Infolists\Components\TextEntry::make('matricula')
-                                    ->label('Matrícula'),
+                                    ->label('Matrícula')
+                                    ->copyable(),
                                 \Filament\Infolists\Components\TextEntry::make('nome')
-                                    ->label('Nome'),
+                                    ->label('Nome')
+                                    ->copyable(),
                                 \Filament\Infolists\Components\TextEntry::make('email')
                                     ->label('E-mail')
                                     ->copyable(),
