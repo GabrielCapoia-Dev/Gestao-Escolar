@@ -45,7 +45,7 @@ class RoleResource extends Resource
 
     public static ?string $navigationGroup = 'Administrativo';
 
-    public static ?int $navigationSort = 3;
+    public static ?int $navigationSort = 8;
 
 
 

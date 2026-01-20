@@ -20,6 +20,7 @@ class SerieResource extends Resource
     protected static ?string $navigationGroup = "Gestão Escolar";
     public static ?string $pluralModelLabel = 'Séries';
     public static ?string $slug = 'series';
+    public static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

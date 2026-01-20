@@ -74,7 +74,7 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Registro de Atividade')
                     ->pluralLabel('Registro de Atividades')
                     ->navigationGroup('Administrativo')
-                    ->navigationSort(1)
+                    ->navigationSort(10)
                     ->authorize(fn() => app(UserService::class)->ehAdmin(Auth::user())),
             ]);
     }

@@ -22,6 +22,7 @@ class EscolaResource extends Resource
     protected static ?string $navigationGroup = "Gestão Escolar";
     public static ?string $pluralModelLabel = 'Escolas';
     public static ?string $slug = 'escolas';
+    public static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {

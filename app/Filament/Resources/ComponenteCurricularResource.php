@@ -19,6 +19,7 @@ class ComponenteCurricularResource extends Resource
     public static ?string $modelLabel = 'Componente Curricular';
     public static ?string $pluralModelLabel = 'Componentes Curriculares';
 
+    public static ?int $navigationSort = 5;
     protected static ?string $slug = 'componentes-curriculares';
 
     public static function form(Form $form): Form

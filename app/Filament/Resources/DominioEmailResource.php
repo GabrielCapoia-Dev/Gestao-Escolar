@@ -26,6 +26,7 @@ class DominioEmailResource extends Resource
 
     public static ?string $label = 'Dominio Permitido';
 
+    public static ?int $navigationSort = 7;
     public static ?string $pluralLabel = 'Dominios Permitidos';
 
     public static function getNavigationBadge(): ?string

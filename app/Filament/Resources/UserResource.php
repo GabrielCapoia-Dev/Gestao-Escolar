@@ -19,6 +19,7 @@ class UserResource extends Resource
     protected static ?string $navigationGroup = "Acesso";
     public static ?string $pluralModelLabel = 'Usuários';
     public static ?string $slug = 'usuarios';
+    public static ?int $navigationSort = 6;
 
     public static function getNavigationBadge(): ?string
     {

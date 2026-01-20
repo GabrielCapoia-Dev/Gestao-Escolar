@@ -26,6 +26,8 @@ class TurmaResource extends Resource
     public static ?string $pluralModelLabel = 'Turmas';
     public static ?string $slug = 'turmas';
 
+    public static ?int $navigationSort = 0;
+
     public static function form(Form $form): Form
     {
         $userService = app(UserService::class);

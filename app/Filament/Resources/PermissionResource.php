@@ -40,7 +40,7 @@ class PermissionResource extends Resource
 
     public static ?string $slug = 'permissoes';
 
-    public static ?int $navigationSort = 2;
+    public static ?int $navigationSort = 9;
 
 
     public static function form(Form $form): Form

@@ -22,6 +22,7 @@ class ProfessorResource extends Resource
     protected static ?string $navigationGroup = "Gestão Escolar";
     public static ?string $pluralModelLabel = 'Professores';
     public static ?string $slug = 'professores';
+    public static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
