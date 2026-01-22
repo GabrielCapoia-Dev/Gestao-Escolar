@@ -49,4 +49,9 @@ class Professor extends Model
             'turma_componente_professor'
         )->withPivot('turma_id');
     }
+
+    public function funcaoAdministrativa()
+    {
+        return $this->belongsTo(FuncaoAdministrativa::class, 'funcao_administrativa_id');
+    }
 }
