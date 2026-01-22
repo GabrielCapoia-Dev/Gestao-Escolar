@@ -130,7 +130,10 @@ class TurmaResource extends Resource
                                                 if (!$escolaId) {
                                                     return [];
                                                 }
+
+                                                // Exclui professores com função administrativa
                                                 return Professor::where('id_escola', $escolaId)
+                                                    ->whereNull('funcao_administrativa_id')
                                                     ->pluck('nome', 'id')
                                                     ->toArray();
                                             })
@@ -166,7 +169,7 @@ class TurmaResource extends Resource
         return $table
             ->modifyQueryUsing(function (Builder $query) {
                 $user = Auth::user();
-                })
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('escola.nome')
                     ->label('Escola')

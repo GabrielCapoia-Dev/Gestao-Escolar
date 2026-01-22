@@ -6,19 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class FuncaoAdministrativa extends Model
 {
-    //
     protected $table = 'funcao_administrativa';
 
-    public $fillable = [
+    protected $fillable = [
         'nome',
-        'portaria'
+        'portaria',
+        'tem_relacao_turma',
     ];
 
-    public function casts()
+    protected function casts(): array
     {
         return [
             'nome' => 'string',
             'portaria' => 'string',
+            'tem_relacao_turma' => 'boolean',
         ];
     }
 

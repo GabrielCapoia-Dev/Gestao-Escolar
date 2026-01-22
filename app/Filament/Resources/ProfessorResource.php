@@ -8,9 +8,9 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use App\Services\UserService;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
 
 class ProfessorResource extends Resource
@@ -73,9 +73,10 @@ class ProfessorResource extends Resource
         return $table
             ->modifyQueryUsing(function (Builder $query) {
                 $user = Auth::user();
-                return app(UserService::class)->aplicarFiltroPorEscolaDoUsuario($query, $user);
-            })
+                $query = app(UserService::class)->aplicarFiltroPorEscolaDoUsuario($query, $user);
 
+                return $query->whereNull('funcao_administrativa_id');
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('escola.nome')
                     ->label('Escola')
