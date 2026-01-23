@@ -26,6 +26,9 @@ class ProfessorResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $userService = app(UserService::class);
+        $ehAdmin = $userService->ehAdmin(Auth::user());
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Dados do Professor')
@@ -37,17 +40,20 @@ class ProfessorResource extends Resource
                             ->preload()
                             ->required()
                             ->placeholder('Selecione a escola')
+                            ->disabled(fn(?Professor $record) => $record !== null && !$ehAdmin)
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('matricula')
                             ->label('Matrícula')
                             ->required()
+                            ->disabled(fn(?Professor $record) => $record !== null && !$ehAdmin)
                             ->maxLength(255)
                             ->placeholder('Ex: PROF001'),
 
                         Forms\Components\TextInput::make('nome')
                             ->label('Nome Completo')
                             ->required()
+                            ->disabled(fn(?Professor $record) => $record !== null && !$ehAdmin)
                             ->maxLength(255)
                             ->placeholder('Ex: João da Silva'),
 

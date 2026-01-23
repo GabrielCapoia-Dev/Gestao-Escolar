@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\ComponenteCurricular;
 use App\Policies\ComponenteCurricularPolicy;
 use App\Models\DominioEmail;
+use App\Models\EquipeGestora;
 use App\Models\Escola;
 use App\Models\Permission;
 use App\Models\Professor;
@@ -26,6 +27,7 @@ use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use App\Observers\TurmaObserver;
+use App\Policies\EquipeGestoraPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Turma::class, TurmaPolicy::class);
         Gate::policy(Professor::class, ProfessorPolicy::class);
         Gate::policy(ComponenteCurricular::class, ComponenteCurricularPolicy::class);
+        Gate::policy(EquipeGestora::class, EquipeGestoraPolicy::class);
+
 
         Gate::define('admin-only', function ($user) {
             return $user->hasRole('Admin');

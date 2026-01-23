@@ -16,4 +16,24 @@ class ManageFuncaoAdministrativas extends ManageRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    protected function mutateFormDataUsing(array $data): array
+    {
+        $data['portaria'] = "{$data['portaria_numero']}/{$data['portaria_ano']}";
+
+        unset($data['portaria_numero'], $data['portaria_ano']);
+
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        if (!empty($data['portaria']) && str_contains($data['portaria'], '/')) {
+            [$num, $ano] = explode('/', $data['portaria']);
+            $data['portaria_numero'] = $num;
+            $data['portaria_ano'] = $ano;
+        }
+
+        return $data;
+    }
 }

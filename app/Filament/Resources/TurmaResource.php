@@ -169,6 +169,10 @@ class TurmaResource extends Resource
         return $table
             ->modifyQueryUsing(function (Builder $query) {
                 $user = Auth::user();
+                $query = app(UserService::class)->aplicarFiltroPorEscolaDoUsuario($query, $user);
+
+                return $query;
+                
             })
             ->columns([
                 Tables\Columns\TextColumn::make('escola.nome')

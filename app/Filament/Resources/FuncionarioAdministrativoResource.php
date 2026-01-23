@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\FuncionarioAdministrativoResource\Pages;
 use App\Models\FuncaoAdministrativa;
+use App\Models\EquipeGestora;
 use App\Models\Professor;
 use App\Models\Turma;
 use App\Services\UserService;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\Auth;
 
 class FuncionarioAdministrativoResource extends Resource
 {
-    protected static ?string $model = Professor::class;
+    protected static ?string $model = EquipeGestora::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
     public static ?string $modelLabel = 'Equipe Gestora';
@@ -71,7 +72,7 @@ class FuncionarioAdministrativoResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->visible(fn(?Professor $record) => $record === null),
-               // Formulário de EDIÇÃO - mostra dados do professor (readonly)
+                // Formulário de EDIÇÃO - mostra dados do professor (readonly)
                 Forms\Components\Section::make('Dados do Professor')
                     ->schema([
                         Forms\Components\Placeholder::make('nome_display')
@@ -93,9 +94,19 @@ class FuncionarioAdministrativoResource extends Resource
                     ->columns(2)
                     ->visible(fn(?Professor $record) => $record !== null),
 
- 
+
                 // Função Administrativa (comum para criar e editar)
                 Forms\Components\Section::make('Função Administrativa')
+                    ->afterStateHydrated(function (?EquipeGestora $record, Set $set) {
+                        if (!$record?->portaria) {
+                            return;
+                        }
+
+                        [$numero, $ano] = explode('/', $record->portaria);
+
+                        $set('portaria_numero', $numero);
+                        $set('portaria_ano', $ano);
+                    })
                     ->schema([
                         Forms\Components\Select::make('funcao_administrativa_id')
                             ->label('Função Administrativa')
@@ -110,33 +121,46 @@ class FuncionarioAdministrativoResource extends Resource
                             })
                             ->columnSpan(1),
 
-                        Forms\Components\TextInput::make('portaria')
-                            ->label('Portaria')
-                            ->placeholder('Ex: 001/2026')
-                            ->maxLength(255)
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                // remove tudo que não for número
-                                $numeros = preg_replace('/\D/', '', $state);
+                        Forms\Components\Grid::make(2)
+                            ->columnSpan(1)
+                            ->schema([
+                                Forms\Components\TextInput::make('portaria_numero')
+                                    ->label('Nº Portaria')
+                                    ->placeholder('001')
+                                    ->required()
+                                    ->numeric()
+                                    ->maxLength(10)
+                                    ->suffix('/')
+                                    ->dehydrated(false)
+                                    ->columnSpan(1),
 
-                                // se tiver mais de 4 dígitos, insere a barra
-                                if (strlen($numeros) > 4) {
-                                    $valor = substr($numeros, 0, -4) . '/' . substr($numeros, -4);
-                                } else {
-                                    $valor = $numeros;
+                                Forms\Components\TextInput::make('portaria_ano')
+                                    ->label('Ano Portaria')
+                                    ->placeholder('2026')
+                                    ->required()
+                                    ->numeric()
+                                    ->minLength(4)
+                                    ->maxLength(4)
+                                    ->dehydrated(false)
+                                    ->rules(['integer', 'min:2000'])
+                                    ->columnSpan(1),
+                            ]),
+
+                        Forms\Components\Hidden::make('portaria')
+                            ->dehydrateStateUsing(function (Get $get) {
+                                $numero = $get('portaria_numero');
+                                $ano = $get('portaria_ano');
+
+                                if (!$numero || !$ano) {
+                                    return null;
                                 }
 
-                                $set('portaria', $valor);
+                                return "{$numero}/{$ano}";
                             })
-                            ->regex('/^\d+\/20(0[1-9]|[1-9]\d)$/')
-                            ->validationMessages([
-                                'regex' => 'Formato inválido. Ex: 001/2026 (ano maior que 2000).',
-                            ])
-                            ->columnSpan(1),
+                            ->required(),
 
                         Forms\Components\Checkbox::make('selecionar_todas_turmas')
-                            ->label('Selecionar todas as turmas da escola')
+                            ->label('Unidade com apenas um(a) coordenador(a)')
                             ->live()
                             ->afterStateUpdated(function (Set $set, Get $get, bool $state, ?Professor $record) {
                                 if ($state) {
@@ -361,6 +385,11 @@ class FuncionarioAdministrativoResource extends Resource
                     ->label('Remover Função')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('danger')
+                    ->visible(function():bool {
+                        /** @var \App\Models\User $user */
+                        $user = Auth::user();
+                        return $user->hasPermissionTo('Excluir Equipe Gestora');
+                    })
                     ->requiresConfirmation()
                     ->modalHeading('Remover Função Administrativa')
                     ->modalDescription(fn($record) => "Tem certeza que deseja remover a função administrativa de {$record->nome}? Ele voltará a aparecer na lista de professores.")

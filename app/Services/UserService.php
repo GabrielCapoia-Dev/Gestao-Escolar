@@ -342,6 +342,7 @@ class UserService
             Tables\Columns\TextColumn::make('email')
                 ->label('E-mail')
                 ->wrap()
+                ->copyable()
                 ->searchable(),
 
             Tables\Columns\ToggleColumn::make('email_approved')

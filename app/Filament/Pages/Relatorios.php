@@ -20,6 +20,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use App\Services\UserService;
+use Illuminate\Support\Facades\Auth;
 
 class Relatorios extends Page implements HasTable
 {
@@ -30,6 +32,13 @@ class Relatorios extends Page implements HasTable
     protected static ?string $title = 'Relatório de Turmas';
     protected static ?string $navigationGroup = 'Gestão Escolar';
     protected static string $view = 'filament.pages.relatorios';
+
+    public static function canAccess(): bool
+    {
+        $user = Auth::user();
+        return app(UserService::class)->ehAdmin($user);
+    }
+
 
     protected function getHeaderActions(): array
     {
@@ -61,15 +70,18 @@ class Relatorios extends Page implements HasTable
                 'series.nome as serie',
                 'turmas.nome as turma',
                 DB::raw("CASE turmas.turno 
-                    WHEN 'manha' THEN 'Manhã'
-                    WHEN 'tarde' THEN 'Tarde'
-                    WHEN 'noite' THEN 'Noite'
-                    WHEN 'integral' THEN 'Integral'
-                    ELSE turmas.turno
-                END as turno"),
+                                    WHEN 'manha' THEN 'Manhã'
+                                    WHEN 'tarde' THEN 'Tarde'
+                                    WHEN 'noite' THEN 'Noite'
+                                    WHEN 'integral' THEN 'Integral'
+                                    ELSE turmas.turno
+                                END as turno"),
                 'cc.nome as componente',
                 DB::raw("COALESCE(professores.nome, 'Sem professor') as professor"),
+                DB::raw("COALESCE(professores.matricula, 'Não informado') as matricula"),
+                DB::raw("COALESCE(professores.email, 'Não informado') as email"),
             ])
+
             ->orderBy('escolas.nome')
             ->orderBy('series.nome')
             ->orderBy('turmas.nome')
@@ -81,7 +93,16 @@ class Relatorios extends Page implements HasTable
         $sheet->setTitle('Relatório de Turmas');
 
         // Cabeçalhos
-        $headers = ['Escola', 'Série', 'Turma', 'Turno', 'Componente Curricular', 'Professor'];
+        $headers = [
+            'Escola',
+            'Série',
+            'Turma',
+            'Turno',
+            'Componente Curricular',
+            'Professor',
+            'Matrícula',
+            'E-mail',
+        ];
         $sheet->fromArray($headers, null, 'A1');
 
         // Estilo do cabeçalho
@@ -89,14 +110,15 @@ class Relatorios extends Page implements HasTable
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '4F46E5'],
+                'startColor' => ['rgb' => '074f9b'],
             ],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             'borders' => [
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN],
             ],
         ];
-        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+        $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
+
 
         // Dados
         $row = 2;
@@ -107,6 +129,8 @@ class Relatorios extends Page implements HasTable
             $sheet->setCellValue("D{$row}", $item->turno);
             $sheet->setCellValue("E{$row}", $item->componente);
             $sheet->setCellValue("F{$row}", $item->professor);
+            $sheet->setCellValue("G{$row}", $item->matricula);
+            $sheet->setCellValue("H{$row}", $item->email);
             $row++;
         }
 
@@ -117,13 +141,11 @@ class Relatorios extends Page implements HasTable
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN],
             ],
         ];
-        $sheet->getStyle("A2:F{$lastRow}")->applyFromArray($dataStyle);
+        $sheet->getStyle("A2:H{$lastRow}")->applyFromArray($dataStyle);
 
-        // Auto-ajustar largura das colunas
-        foreach (range('A', 'F') as $col) {
+        foreach (range('A', 'H') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
-
         // Gerar arquivo
         $filename = 'relatorio_turmas_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
         $path = storage_path("app/public/{$filename}");
@@ -165,28 +187,34 @@ class Relatorios extends Page implements HasTable
             ->columns([
                 Tables\Columns\TextColumn::make('escola_nome')
                     ->label('Escola')
-                    ->searchable(query: fn (Builder $query, string $search) => 
+                    ->searchable(
+                        query: fn(Builder $query, string $search) =>
                         $query->where('escolas.nome', 'like', "%{$search}%")
                     )
-                    ->sortable(query: fn (Builder $query, string $direction) => 
+                    ->sortable(
+                        query: fn(Builder $query, string $direction) =>
                         $query->orderBy('escolas.nome', $direction)
                     ),
 
                 Tables\Columns\TextColumn::make('serie_nome')
                     ->label('Série')
-                    ->searchable(query: fn (Builder $query, string $search) => 
+                    ->searchable(
+                        query: fn(Builder $query, string $search) =>
                         $query->where('series.nome', 'like', "%{$search}%")
                     )
-                    ->sortable(query: fn (Builder $query, string $direction) => 
+                    ->sortable(
+                        query: fn(Builder $query, string $direction) =>
                         $query->orderBy('series.nome', $direction)
                     ),
 
                 Tables\Columns\TextColumn::make('turma_nome')
                     ->label('Turma')
-                    ->searchable(query: fn (Builder $query, string $search) => 
+                    ->searchable(
+                        query: fn(Builder $query, string $search) =>
                         $query->where('turmas.nome', 'like', "%{$search}%")
                     )
-                    ->sortable(query: fn (Builder $query, string $direction) => 
+                    ->sortable(
+                        query: fn(Builder $query, string $direction) =>
                         $query->orderBy('turmas.nome', $direction)
                     ),
 
@@ -207,45 +235,52 @@ class Relatorios extends Page implements HasTable
                         'integral' => 'success',
                         default => 'secondary',
                     })
-                    ->sortable(query: fn (Builder $query, string $direction) => 
+                    ->sortable(
+                        query: fn(Builder $query, string $direction) =>
                         $query->orderBy('turmas.turno', $direction)
                     ),
 
                 Tables\Columns\TextColumn::make('componente_nome')
                     ->label('Componente Curricular')
-                    ->searchable(query: fn (Builder $query, string $search) => 
+                    ->searchable(
+                        query: fn(Builder $query, string $search) =>
                         $query->where('componentes_curriculares.nome', 'like', "%{$search}%")
                     )
-                    ->sortable(query: fn (Builder $query, string $direction) => 
+                    ->sortable(
+                        query: fn(Builder $query, string $direction) =>
                         $query->orderBy('componentes_curriculares.nome', $direction)
                     ),
 
                 Tables\Columns\TextColumn::make('professor_nome')
                     ->label('Professor')
                     ->default('Sem professor')
-                    ->searchable(query: fn (Builder $query, string $search) => 
+                    ->searchable(
+                        query: fn(Builder $query, string $search) =>
                         $query->where('professores.nome', 'like', "%{$search}%")
                     )
-                    ->sortable(query: fn (Builder $query, string $direction) => 
+                    ->sortable(
+                        query: fn(Builder $query, string $direction) =>
                         $query->orderBy('professores.nome', $direction)
                     ),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('escola')
                     ->label('Escola')
-                    ->options(fn () => Escola::pluck('nome', 'id'))
+                    ->options(fn() => Escola::pluck('nome', 'id'))
                     ->searchable()
-                    ->query(fn (Builder $query, array $data) => 
-                        $data['value'] 
+                    ->query(
+                        fn(Builder $query, array $data) =>
+                        $data['value']
                             ? $query->where('turmas.id_escola', $data['value'])
                             : $query
                     ),
 
                 Tables\Filters\SelectFilter::make('serie')
                     ->label('Série')
-                    ->options(fn () => Serie::pluck('nome', 'id'))
+                    ->options(fn() => Serie::pluck('nome', 'id'))
                     ->searchable()
-                    ->query(fn (Builder $query, array $data) => 
+                    ->query(
+                        fn(Builder $query, array $data) =>
                         $data['value']
                             ? $query->where('turmas.id_serie', $data['value'])
                             : $query
@@ -259,7 +294,8 @@ class Relatorios extends Page implements HasTable
                         'noite' => 'Noite',
                         'integral' => 'Integral',
                     ])
-                    ->query(fn (Builder $query, array $data) =>
+                    ->query(
+                        fn(Builder $query, array $data) =>
                         $data['value']
                             ? $query->where('turmas.turno', $data['value'])
                             : $query

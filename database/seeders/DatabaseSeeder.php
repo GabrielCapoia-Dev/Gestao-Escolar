@@ -54,6 +54,10 @@ class DatabaseSeeder extends Seeder
             'Criar Componentes Curriculares',
             'Editar Componentes Curriculares',
             'Excluir Componentes Curriculares',
+            'Listar Equipe Gestora',
+            'Criar Equipe Gestora',
+            'Editar Equipe Gestora',
+            'Excluir Equipe Gestora',
         ];
 
         $secretarioPermissionsList = [
