@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Professor extends Model
 {
@@ -12,6 +13,7 @@ class Professor extends Model
     protected $table = 'professores';
 
     protected $fillable = [
+        'user_id',
         'id_escola',
         'matricula',
         'nome',
@@ -30,6 +32,30 @@ class Professor extends Model
             'telefone' => 'string',
             'portaria' => 'string',
         ];
+    }
+
+    /**
+     * Relação 1:1 com User
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Verifica se o professor já tem conta de usuário
+     */
+    public function temContaUsuario(): bool
+    {
+        return $this->user_id !== null;
+    }
+
+    /**
+     * Busca professor pelo email
+     */
+    public static function buscarPorEmail(string $email): ?self
+    {
+        return static::where('email', strtolower(trim($email)))->first();
     }
 
     public function escola()

@@ -11,7 +11,7 @@ class CriarPermissoesEquipeGestora extends Command
 {
     protected $signature = 'permissoes:equipe-gestora';
 
-    protected $description = 'Cria permissões da Equipe Gestora e vincula à role Admin';
+    protected $description = 'Cria permissões vincular à role';
 
     public function handle(): int
     {
@@ -25,7 +25,7 @@ class CriarPermissoesEquipeGestora extends Command
             'Excluir Equipe Gestora',
         ];
 
-        $this->info('Criando permissões da Equipe Gestora...');
+        $this->info('Criando permissões...');
 
         foreach ($permissoes as $nome) {
             Permission::firstOrCreate(['name' => $nome]);

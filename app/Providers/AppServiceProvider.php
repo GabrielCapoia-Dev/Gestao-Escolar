@@ -28,6 +28,7 @@ use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use App\Observers\TurmaObserver;
 use App\Policies\EquipeGestoraPolicy;
+use App\Services\ProfessorAuthService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -52,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ComponenteCurricular::class, ComponenteCurricularPolicy::class);
         Gate::policy(EquipeGestora::class, EquipeGestoraPolicy::class);
 
+        $this->app->singleton(ProfessorAuthService::class);
 
         Gate::define('admin-only', function ($user) {
             return $user->hasRole('Admin');

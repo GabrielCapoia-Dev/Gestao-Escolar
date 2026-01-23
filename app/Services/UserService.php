@@ -437,6 +437,12 @@ class UserService
         if ($this->ehAdmin($user)) {
             return $query;
         }
+
+        // Verifica se é professor
+        if ($user->ehProfessor()) {
+            return $query->where('id_escola', $user->professor->id_escola);
+        }
+        
         if (! empty($user->id_escola)) {
             return $query->where('id_escola', $user->id_escola);
         }

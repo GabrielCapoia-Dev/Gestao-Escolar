@@ -13,8 +13,26 @@ use Illuminate\Support\Facades\Auth;
 
 class GoogleService
 {
+    public function __construct(
+        private ProfessorAuthService $professorAuth,
+        private DominioEmailService $dominioEmail
+    ) {}
+
     public function registrarOuLogar(SocialiteUserContract $oauthUser): ?User
     {
+        // 1. PRIMEIRO: Verifica se é professor
+        $userProfessor = $this->professorAuth->tentarAutenticarProfessor($oauthUser);
+
+        if ($userProfessor) {
+            \Filament\Notifications\Notification::make()
+                ->title('Acesso Permitido')
+                ->body('Bem-vindo de volta!')
+                ->success()
+                ->send();
+            return $userProfessor;
+        }
+
+        // 2. Continua o bluxo normal
         $user = User::where('email', $oauthUser->getEmail())
             ->orWhere('google_email', $oauthUser->getEmail())
             ->first();

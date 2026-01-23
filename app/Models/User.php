@@ -14,6 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -54,6 +55,30 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'google_token_expires_in' => 'datetime',
         ];
+    }
+
+    /**
+     * Relação 1:1 com Professor
+     */
+    public function professor(): HasOne
+    {
+        return $this->hasOne(Professor::class, 'user_id');
+    }
+
+    /**
+     * Verifica se o usuário é um professor
+     */
+    public function ehProfessor(): bool
+    {
+        return $this->professor()->exists();
+    }
+
+    /**
+     * Retorna a escola do professor (se for professor)
+     */
+    public function escolaDoProfessor(): ?Escola
+    {
+        return $this->professor?->escola;
     }
 
     public function getActivitylogOptions(): LogOptions
