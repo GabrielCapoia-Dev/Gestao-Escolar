@@ -12,10 +12,12 @@ return new class extends Migration
         Schema::table('professores', function (Blueprint $table) {
             $table->foreignId('user_id')
                 ->nullable()
-                ->unique()
                 ->after('id')
                 ->constrained('users')
                 ->nullOnDelete();
+            
+            // Índice para performance (sem UNIQUE)
+            $table->index('user_id');
         });
     }
 
@@ -23,6 +25,7 @@ return new class extends Migration
     {
         Schema::table('professores', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
+            $table->dropIndex(['user_id']);
             $table->dropColumn('user_id');
         });
     }

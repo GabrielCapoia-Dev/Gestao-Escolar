@@ -429,23 +429,51 @@ class UserService
         ];
     }
 
+// app/Services/UserService.php
+
+    /**
+     * Filtro genérico por escola (para Resources que não são Turma)
+     */
     public function aplicarFiltroPorEscolaDoUsuario(Builder $query, ?User $user): Builder
     {
-        if (! $user) {
-            return $query;
-        }
-        if ($this->ehAdmin($user)) {
+        if (!$user || $this->ehAdmin($user)) {
             return $query;
         }
 
-        // Verifica se é professor
         if ($user->ehProfessor()) {
-            return $query->where('id_escola', $user->professor->id_escola);
+            $escolasIds = $user->professores->pluck('id_escola')->unique()->toArray();
+            return $query->whereIn('id_escola', $escolasIds);
         }
-        
-        if (! empty($user->id_escola)) {
+
+        if (!empty($user->id_escola)) {
             return $query->where('id_escola', $user->id_escola);
         }
+
+        return $query;
+    }
+
+    /**
+     * Filtro específico para Turmas - Professor só vê turmas onde leciona
+     */
+    public function aplicarFiltroTurmasDoUsuario(Builder $query, ?User $user): Builder
+    {
+        if (!$user || $this->ehAdmin($user)) {
+            return $query;
+        }
+
+        if ($user->ehProfessor()) {
+            $professoresIds = $user->professores->pluck('id')->toArray();
+
+            return $query->whereHas('componentes', function ($q) use ($professoresIds) {
+                $q->whereIn('turma_componente_professor.professor_id', $professoresIds);
+            });
+        }
+
+        // Secretário/usuário comum: vê todas as turmas da escola
+        if (!empty($user->id_escola)) {
+            return $query->where('id_escola', $user->id_escola);
+        }
+
         return $query;
     }
 }

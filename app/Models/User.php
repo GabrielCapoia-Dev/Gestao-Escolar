@@ -14,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -57,28 +57,22 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    /**
-     * Relação 1:1 com Professor
-     */
-    public function professor(): HasOne
+    public function professores(): HasMany
     {
-        return $this->hasOne(Professor::class, 'user_id');
+        return $this->hasMany(Professor::class, 'user_id');
     }
 
-    /**
-     * Verifica se o usuário é um professor
-     */
     public function ehProfessor(): bool
     {
-        return $this->professor()->exists();
+        return $this->professores()->exists();
     }
 
     /**
-     * Retorna a escola do professor (se for professor)
+     * Retorna as escolas do professor (pode ter mais de uma)
      */
-    public function escolaDoProfessor(): ?Escola
+    public function escolasDoProfessor()
     {
-        return $this->professor?->escola;
+        return $this->professores->pluck('escola')->unique('id');
     }
 
     public function getActivitylogOptions(): LogOptions

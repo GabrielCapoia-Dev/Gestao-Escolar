@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 
 Route::get('/', function () {
-    return view('home');
+    return redirect('/admin');
 });
 
 Route::get('/test', function () {

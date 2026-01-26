@@ -13,6 +13,7 @@ use App\Models\Role;
 use App\Models\Serie;
 use App\Models\Turma;
 use App\Models\User;
+use App\Observers\ProfessorObserver;
 use App\Policies\DominioEmailPolicy;
 use App\Policies\EscolaPolicy;
 use App\Policies\PermissionPolicy;
@@ -66,5 +67,6 @@ class AppServiceProvider extends ServiceProvider
 
 
         Turma::observe(TurmaObserver::class);
+        Professor::observe(ProfessorObserver::class);
     }
 }

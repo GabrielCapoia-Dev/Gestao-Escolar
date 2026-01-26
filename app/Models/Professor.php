@@ -51,11 +51,21 @@ class Professor extends Model
     }
 
     /**
-     * Busca professor pelo email
+     * Busca TODOS os professores pelo email (pode retornar múltiplos)
      */
-    public static function buscarPorEmail(string $email): ?self
+    public static function buscarTodosPorEmail(string $email): \Illuminate\Database\Eloquent\Collection
     {
-        return static::where('email', strtolower(trim($email)))->first();
+        return static::where('email', strtolower(trim($email)))->get();
+    }
+
+    /**
+     * Verifica se algum professor com esse email já tem conta
+     */
+    public static function emailJaTemConta(string $email): bool
+    {
+        return static::where('email', strtolower(trim($email)))
+            ->whereNotNull('user_id')
+            ->exists();
     }
 
     public function escola()

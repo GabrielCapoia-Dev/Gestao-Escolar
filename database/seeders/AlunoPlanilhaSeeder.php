@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Aluno;
 use App\Models\Escola;
 use App\Models\Serie;
 use App\Models\Turma;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class AlunoPlanilhaSeeder extends Seeder
 {
@@ -14,160 +16,172 @@ class AlunoPlanilhaSeeder extends Seeder
 
     public function run(): void
     {
-        $this->command->info("Baixando CSV da planilha...");
+        $this->command->info('Baixando CSV da planilha...');
 
         $response = Http::timeout(60)->get(self::SHEET_URL);
-
         if (!$response->ok()) {
-            $this->command->error('Falha ao baixar CSV da planilha.');
+            $this->command->error('Falha ao baixar CSV.');
             return;
         }
 
-        $csv = $response->body();
-        $linhas = $this->parseCsv($csv);
-
-        if (empty($linhas)) {
-            $this->command->warn('CSV vazio ou sem dados.');
+        $linhas = $this->parseCsv($response->body());
+        if (count($linhas) < 2) {
+            $this->command->warn('CSV vazio.');
             return;
         }
 
-        // Cabeçalho
         $header = array_map('trim', array_shift($linhas));
 
-        // Mapeia índices
         $idxEscola   = array_search('Escola', $header);
         $idxSeriacao = array_search('Seriação', $header);
         $idxTurma    = array_search('Turma', $header);
         $idxTurno    = array_search('Turno', $header);
 
-        if ($idxEscola === false || $idxSeriacao === false || $idxTurma === false || $idxTurno === false) {
-            $this->command->error('Cabeçalho da planilha não corresponde aos nomes esperados.');
-            return;
-        }
+        $idxCgm           = 5;   // F
+        $idxNomeAluno     = 6;   // G
+        $idxDataNasc      = 7;   // H
+        $idxIdade         = 8;   // I
+        $idxSexo          = 9;   // J
+        $idxSituacao      = 12;  // M
+        $idxDataMatricula = 13;  // N
 
-        $escolasCriadas = 0;
-        $seriesCriadas = 0;
-        $turmasCriadas = 0;
-        $linhasProcessadas = 0;
-        $linhasIgnoradas = 0;
+        $errosCsv = [];
+        $processadas = 0;
+        $ignoradas = 0;
 
-        // Cache em memória
-        $escolasCache = [];
-        $seriesCache = [];
-        $turmasCache = [];
+        foreach ($linhas as $linha) {
 
-        foreach ($linhas as $linhaNumero => $linha) {
-            $linhaReal = $linhaNumero + 2;
+            $cgm  = trim($linha[$idxCgm] ?? '');
+            $nome = trim($linha[$idxNomeAluno] ?? '');
 
-            $escolaNome  = trim($linha[$idxEscola] ?? '');
-            $seriacao    = trim($linha[$idxSeriacao] ?? '');
-            $turmaLetra  = trim($linha[$idxTurma] ?? '');
-            $turno       = trim($linha[$idxTurno] ?? '');
-
-            $turno = trim($linha[$idxTurno] ?? '');
-            $turno = strtolower($turno);
-
-            // Ignora "Sem Seriação" e linhas incompletas
-            if ($escolaNome === '' || $seriacao === '' || $seriacao === 'Sem Seriação' || $turmaLetra === '' || $turno === '') {
-                $linhasIgnoradas++;
+            if ($cgm === '' || $nome === '') {
+                $ignoradas++;
                 continue;
             }
 
-            // 1. ESCOLA
-            if (!isset($escolasCache[$escolaNome])) {
-                $escola = Escola::firstOrCreate(
-                    ['nome' => $escolaNome],
-                    [
-                        'codigo' => 'ESC' . str_pad((Escola::max('id') ?? 0) + 1, 3, '0', STR_PAD_LEFT),
-                        'telefone' => null,
-                        'email' => null,
-                    ]
-                );
+            $escolaNome = trim($linha[$idxEscola] ?? '');
+            $seriacao   = trim($linha[$idxSeriacao] ?? '');
+            $turmaNome  = trim($linha[$idxTurma] ?? '');
+            $turno      = strtolower(trim($linha[$idxTurno] ?? ''));
 
-                if ($escola->wasRecentlyCreated) {
-                    $escolasCriadas++;
-                    $this->command->info("✅ Escola criada: {$escolaNome}");
-                }
-
-                $escolasCache[$escolaNome] = $escola;
+            // ===== VALIDA ESCOLA =====
+            $escola = Escola::where('nome', $escolaNome)->first();
+            if (!$escola) {
+                $this->pushErro($errosCsv, $linha, 'Escola não encontrada');
+                continue;
             }
 
-            $escola = $escolasCache[$escolaNome];
+            // ===== VALIDA SÉRIE =====
+            $serieNome = $turno === 'integral'
+                ? "{$seriacao} - Base"
+                : $seriacao;
 
-            // 2. SÉRIE (regra do integral → Base)
-            $serieNome = $seriacao;
-
-            if ($turno === 'integral') {
-                $serieNome = "{$seriacao} - Base";
+            $serie = Serie::where('nome', $serieNome)->first();
+            if (!$serie) {
+                $this->pushErro($errosCsv, $linha, 'Série não encontrada');
+                continue;
             }
 
-            if (!isset($seriesCache[$serieNome])) {
+            // ===== VALIDA TURMA NA ESCOLA =====
+            $turma = Turma::where([
+                'id_escola' => $escola->id,
+                'id_serie'  => $serie->id,
+                'nome'      => $turmaNome,
+                'turno'     => $turno,
+            ])->first();
 
-                $serie = Serie::firstOrCreate(
-                    ['nome' => $serieNome],
-                    [
-                        'codigo' => 'SER' . str_pad((Serie::max('id') ?? 0) + 1, 3, '0', STR_PAD_LEFT),
-                    ]
-                );
-
-                if ($serie->wasRecentlyCreated) {
-                    $seriesCriadas++;
-                    $this->command->info("✅ Série criada: {$serieNome}");
-                }
-
-                $seriesCache[$serieNome] = $serie;
+            if (!$turma) {
+                $this->pushErro($errosCsv, $linha, 'Turma não encontrada na escola');
+                continue;
             }
 
-            $serie = $seriesCache[$serieNome];
+            // ===== SALVA / ATUALIZA ALUNO =====
+            Aluno::updateOrCreate(
+                ['cgm' => $cgm],
+                [
+                    'id_turma'        => $turma->id,
+                    'nome'            => $nome,
+                    'situacao'        => trim($linha[$idxSituacao] ?? ''),
+                    'data_matricula'  => $this->normalizeDate($linha[$idxDataMatricula] ?? null),
+                    'data_nascimento' => $this->normalizeDate($linha[$idxDataNasc] ?? null),
+                    'idade'           => is_numeric($linha[$idxIdade] ?? null) ? (int)$linha[$idxIdade] : null,
+                    'sexo'            => trim($linha[$idxSexo] ?? ''),
+                ]
+            );
 
-            // 3. TURMA
-            $turmaKey = "{$escola->id}|{$serie->id}|{$turmaLetra}|{$turno}";
-
-            if (!isset($turmasCache[$turmaKey])) {
-                $turma = Turma::firstOrCreate(
-                    [
-                        'id_escola' => $escola->id,
-                        'id_serie' => $serie->id,
-                        'nome' => $turmaLetra,
-                        'turno' => $turno,
-                    ],
-                    ['codigo' => 'TUR' . str_pad((Turma::max('id') ?? 0) + 1, 3, '0', STR_PAD_LEFT)]
-                );
-
-                if ($turma->wasRecentlyCreated) {
-                    $turmasCriadas++;
-                    $this->command->info("✅ Turma criada: {$seriacao} - {$turmaLetra} ({$turno}) - {$escolaNome}");
-                }
-
-                $turmasCache[$turmaKey] = $turma;
-            }
-
-            $linhasProcessadas++;
+            $processadas++;
         }
 
-        // LOG FINAL
-        $this->command->info("=====================================");
-        $this->command->info("🎉 Importação concluída!");
-        $this->command->line("📊 Linhas processadas: {$linhasProcessadas}");
-        $this->command->line("⚠️  Linhas ignoradas: {$linhasIgnoradas}");
-        $this->command->line("🏫 Escolas criadas: {$escolasCriadas}");
-        $this->command->line("📚 Séries criadas: {$seriesCriadas}");
-        $this->command->line("👥 Turmas criadas: {$turmasCriadas}");
-        $this->command->info("=====================================");
+        if (!empty($errosCsv)) {
+            $path = 'alunos_sem_turma.csv';
+            Storage::put($path, $this->buildCsv($errosCsv));
+            $this->command->warn("⚠️ Alunos com erro exportados para storage/app/{$path}");
+        }
+
+        $this->command->info('=====================================');
+        $this->command->info('Importação finalizada');
+        $this->command->line("Processadas: {$processadas}");
+        $this->command->line("Ignoradas: {$ignoradas}");
+        $this->command->line("Com erro de vínculo: " . count($errosCsv));
+        $this->command->info('=====================================');
+    }
+
+    private function pushErro(array &$csv, array $linha, string $motivo): void
+    {
+        $csv[] = [
+            $linha[5] ?? '',   // CGM
+            $linha[6] ?? '',   // Nome
+            $linha[0] ?? '',   // Escola
+            $linha[1] ?? '',   // Série
+            $linha[2] ?? '',   // Turma
+            $linha[3] ?? '',   // Turno
+            $motivo,
+        ];
+    }
+
+    private function buildCsv(array $rows): string
+    {
+        $out = fopen('php://temp', 'r+');
+        fputcsv($out, ['CGM', 'Aluno', 'Escola', 'Série', 'Turma', 'Turno', 'Motivo']);
+
+        foreach ($rows as $row) {
+            fputcsv($out, $row);
+        }
+
+        rewind($out);
+        return stream_get_contents($out);
     }
 
     private function parseCsv(string $csv): array
     {
-        $linhas = [];
+        $rows = [];
         $fh = fopen('php://memory', 'r+');
         fwrite($fh, $csv);
         rewind($fh);
 
         while (($row = fgetcsv($fh, 0, ',')) !== false) {
-            $linhas[] = $row;
+            $rows[] = $row;
         }
 
         fclose($fh);
-        return $linhas;
+        return $rows;
+    }
+
+    private function normalizeDate(?string $value): ?string
+    {
+        if (!$value) return null;
+
+        $value = trim($value);
+
+        if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $value)) {
+            $dt = \DateTime::createFromFormat('d/m/Y', $value);
+            return $dt ? $dt->format('Y-m-d') : null;
+        }
+
+        try {
+            return \Carbon\Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }
