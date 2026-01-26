@@ -429,7 +429,6 @@ class UserService
         ];
     }
 
-// app/Services/UserService.php
 
     /**
      * Filtro genérico por escola (para Resources que não são Turma)

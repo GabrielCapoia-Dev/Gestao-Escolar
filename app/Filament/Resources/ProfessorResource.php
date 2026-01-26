@@ -177,12 +177,15 @@ class ProfessorResource extends Resource
 
                         \Filament\Infolists\Components\Section::make('Turmas')
                             ->schema([
-                                \Filament\Infolists\Components\TextEntry::make('turmas_info')
+                                \Filament\Infolists\Components\TextEntry::make('turmas_lista')
                                     ->label('')
+                                    ->getStateUsing(function ($record) {
+                                        return $record->id; // Só precisa retornar algo para o formatStateUsing funcionar
+                                    })
                                     ->formatStateUsing(function ($state, $record) {
                                         $turmas = \App\Models\Turma::whereHas('componentes', function ($query) use ($record) {
-                                            $query->where('professor_id', $record->id);
-                                        })->with(['serie', 'componentes' => function ($query) use ($record) {
+                                            $query->where('turma_componente_professor.professor_id', $record->id);
+                                        })->with(['serie', 'escola', 'componentes' => function ($query) use ($record) {
                                             $query->wherePivot('professor_id', $record->id);
                                         }])->get();
 
@@ -194,13 +197,30 @@ class ProfessorResource extends Resource
 
                                         foreach ($turmas as $turma) {
                                             $componentes = $turma->componentes->pluck('nome')->join(', ');
+                                            $turno = match ($turma->turno) {
+                                                'manha' => 'Manhã',
+                                                'tarde' => 'Tarde',
+                                                'noite' => 'Noite',
+                                                'integral' => 'Integral',
+                                                default => $turma->turno,
+                                            };
 
                                             $html .= '
-                                                <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                                    <div class="font-semibold text-primary-600 dark:text-primary-400">' . e($turma->serie->nome) . ' - Turma ' . e($turma->nome) . '</div>
-                                                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Componentes: ' . e($componentes) . '</div>
-                                                </div>
-                                            ';
+                                <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <div class="font-semibold text-primary-600 dark:text-primary-400">
+                                        ' . e($turma->serie->nome) . ' - Turma ' . e($turma->nome) . '
+                                    </div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        <span class="font-medium">Escola:</span> ' . e($turma->escola->nome) . '
+                                    </div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium">Turno:</span> ' . e($turno) . '
+                                    </div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium">Componentes:</span> ' . e($componentes) . '
+                                    </div>
+                                </div>
+                            ';
                                         }
 
                                         $html .= '</div>';

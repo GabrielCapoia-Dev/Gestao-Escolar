@@ -18,11 +18,11 @@ class FuncaoAdministrativaResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
     public static ?string $modelLabel = 'Função Administrativa';
-    protected static ?string $navigationGroup = "Gestão Escolar";
+    protected static ?string $navigationGroup = "Configurações";
     public static ?string $pluralModelLabel = 'Funções Administrativas';
     public static ?string $slug = 'funcoes-administrativas';
-    public static ?int $navigationSort = 6;
-    protected static bool $shouldRegisterNavigation = false;
+    public static ?int $navigationSort = 999;
+    // protected static bool $shouldRegisterNavigation = false;
     protected static ?string $model = FuncaoAdministrativa::class;
 
 
