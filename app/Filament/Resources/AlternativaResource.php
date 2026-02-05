@@ -9,12 +9,12 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Illuminate\Support\Facades\Auth;
 use Filament\Tables\Table;
 
 class AlternativaResource extends Resource
 {
     protected static ?string $model = Alternativa::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
     protected static ?string $navigationLabel = 'Alternativas';
     protected static ?string $pluralModelLabel = 'Alternativas';
@@ -23,6 +23,13 @@ class AlternativaResource extends Resource
     public static ?int $navigationSort = 999;
     protected static ?string $slug = 'alternativas';
 
+    public static function canAccess(): bool
+    {
+        /** @var \App\Models\User */
+        $user = Auth::user();
+
+        return $user->hasRole('Admin');
+    }
     public static function form(Form $form): Form
     {
         return $form->schema([

@@ -34,6 +34,14 @@ class AvaliacaoResource extends Resource
     protected static ?string $navigationGroup = 'Avaliações';
     protected static ?int $navigationSort = 4;
     protected static ?string $slug = 'avaliacoes';
+    
+    public static function canAccess(): bool
+    {
+        /** @var \App\Models\User */
+        $user = Auth::user();
+
+        return $user->hasRole('Admin');
+    }
 
     protected static function getUserService(): UserService
     {
@@ -402,7 +410,7 @@ class AvaliacaoResource extends Resource
                     ->modalContent(function (Avaliacao $record, Tables\Actions\Action $action) {
 
                         $turmaId = $record->id_turma;
-                        
+
                         $turma = Turma::findOrFail($turmaId);
 
                         $alunos = Aluno::where('id_turma', $turmaId)

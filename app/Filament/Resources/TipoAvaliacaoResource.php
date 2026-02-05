@@ -8,6 +8,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Illuminate\Support\Facades\Auth;
 use Filament\Tables\Table;
 
 class TipoAvaliacaoResource extends Resource
@@ -21,6 +22,15 @@ class TipoAvaliacaoResource extends Resource
     protected static ?string $navigationGroup = 'Configurações';
     public static ?int $navigationSort = 999;
     protected static ?string $slug = 'tipos-avaliacao';
+    // protected static bool $shouldRegisterNavigation = false;
+
+    public static function canAccess(): bool
+    {
+        /** @var \App\Models\User */
+        $user = Auth::user();
+
+        return $user->hasRole('Admin');
+    }
 
     public static function form(Form $form): Form
     {

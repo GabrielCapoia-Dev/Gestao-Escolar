@@ -30,6 +30,13 @@ class AlunoResource extends Resource
     protected static ?string $navigationGroup = "Gestão Escolar";
     protected static ?string $slug = 'alunos';
 
+    public static function canAccess(): bool
+    {
+        /** @var \App\Models\User */
+        $user = Auth::user();
+
+        return $user->hasRole('Admin');
+    }
     public static function form(Form $form): Form
     {
         $userService = app(UserService::class);
@@ -195,7 +202,6 @@ class AlunoResource extends Resource
     {
         return $table
             ->defaultSort('updated_at', 'desc')
-            ->modifyQueryUsing(fn(Builder $query) => $query->ativos()) // Só mostra registros ativos
             ->columns([
                 Tables\Columns\TextColumn::make('turma.escola.nome')
                     ->label('Escola')

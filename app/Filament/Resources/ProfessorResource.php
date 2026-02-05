@@ -16,13 +16,21 @@ use Illuminate\Support\Facades\Auth;
 class ProfessorResource extends Resource
 {
     protected static ?string $model = Professor::class;
-
+    // protected static bool $shouldRegisterNavigation = false;
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
     public static ?string $modelLabel = 'Professor';
     protected static ?string $navigationGroup = "Gestão Escolar";
     public static ?string $pluralModelLabel = 'Professores';
     public static ?string $slug = 'professores';
     public static ?int $navigationSort = 3;
+
+    public static function canAccess(): bool
+    {
+        /** @var \App\Models\User */
+        $user = Auth::user();
+
+        return $user->hasRole('Admin');
+    }
 
     public static function form(Form $form): Form
     {

@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class FuncaoAdministrativaResource extends Resource
 {
@@ -24,6 +25,14 @@ class FuncaoAdministrativaResource extends Resource
     public static ?int $navigationSort = 999;
     // protected static bool $shouldRegisterNavigation = false;
     protected static ?string $model = FuncaoAdministrativa::class;
+
+        public static function canAccess(): bool
+    {
+        /** @var \App\Models\User */
+        $user = Auth::user();
+
+        return $user->hasRole('Admin');
+    }
 
 
     public static function form(Form $form): Form

@@ -12,6 +12,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class PautaResource extends Resource
 {
@@ -24,6 +25,16 @@ class PautaResource extends Resource
     protected static ?string $navigationGroup = 'Avaliações';
     protected static ?int $navigationSort = 3;
     protected static ?string $slug = 'pautas';
+
+    // protected static bool $shouldRegisterNavigation = false;
+
+    public static function canAccess(): bool
+    {
+        /** @var \App\Models\User */
+        $user = Auth::user();
+
+        return $user->hasRole('Admin');
+    }
 
     public static function form(Form $form): Form
     {

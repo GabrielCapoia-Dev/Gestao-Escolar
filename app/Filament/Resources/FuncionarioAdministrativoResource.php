@@ -28,6 +28,15 @@ class FuncionarioAdministrativoResource extends Resource
     public static ?string $pluralModelLabel = 'Equipe Gestora';
     public static ?string $slug = 'equipe-gestora';
     public static ?int $navigationSort = 7;
+    // protected static bool $shouldRegisterNavigation = false;
+
+    public static function canAccess(): bool
+    {
+        /** @var \App\Models\User */
+        $user = Auth::user();
+
+        return $user->hasRole('Admin');
+    }
 
     public static function form(Form $form): Form
     {
@@ -385,7 +394,7 @@ class FuncionarioAdministrativoResource extends Resource
                     ->label('Remover Função')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('danger')
-                    ->visible(function():bool {
+                    ->visible(function (): bool {
                         /** @var \App\Models\User $user */
                         $user = Auth::user();
                         return $user->hasPermissionTo('Excluir Equipe Gestora');
