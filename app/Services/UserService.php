@@ -324,6 +324,13 @@ class UserService
             ->striped();
     }
 
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * Colunas da tabela de usuários.
+ *
+ * @return array
+ */
+/*******  6fdc7c76-a405-4a55-ab49-ea13c8096e5a  *******/
     protected function colunasTabela(): array
     {
         return [
@@ -342,6 +349,7 @@ class UserService
             Tables\Columns\TextColumn::make('email')
                 ->label('E-mail')
                 ->wrap()
+                ->copyable()
                 ->searchable(),
 
             Tables\Columns\ToggleColumn::make('email_approved')
@@ -428,17 +436,19 @@ class UserService
         ];
     }
 
+
+    /**
+     * Filtro genérico por escola (para Resources que não são Turma)
+     */
     public function aplicarFiltroPorEscolaDoUsuario(Builder $query, ?User $user): Builder
     {
-        if (! $user) {
+        if (!$user || $this->ehAdmin($user)) {
             return $query;
         }
-        if ($this->ehAdmin($user)) {
-            return $query;
-        }
-        if (! empty($user->id_escola)) {
+        if (!empty($user->id_escola)) {
             return $query->where('id_escola', $user->id_escola);
         }
+
         return $query;
     }
 }

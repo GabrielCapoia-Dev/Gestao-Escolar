@@ -1,49 +1,48 @@
+x-common-setup: &common-setup
+  build:
+    context: .
+    dockerfile: Dockerfile
+  container_name: laravel-app-gestao-escolar
+  image: laravel-app-gestao-escolar
+  working_dir: /var/www
+  volumes:
+    - .:/var/www
+
+  networks:
+    - laravel_gestao-escolar
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_started
+
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: laravel-app-gestao-escolar
-    container_name: laravel-app-gestao-escolar
-    working_dir: /var/www
+    <<: *common-setup
+    restart: unless-stopped
     ports:
-      - "8000:8000"
-    volumes:
-      - .:/var/www
-      - vendor:/var/www/vendor
-      - node_modules:/var/www/node_modules
-    command: sh -lc "php artisan serve --host=0.0.0.0 --port=8000"
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    networks:
-      - laravel_gestao-escolar
+      - "8082:80"
+    command: sh -lc "php artisan serve --host=0.0.0.0 --port=80"
 
   queue-worker:
-    image: laravel-app-gestao-escolar
+    <<: *common-setup
     container_name: laravel-queue-worker-gestao-escolar
-    working_dir: /var/www
-    volumes:
-      - .:/var/www
-      - vendor:/var/www/vendor
-      - node_modules:/var/www/node_modules
-    command: sh -lc "php artisan queue:work redis --sleep=3 --tries=3"
+    restart: unless-stopped
     depends_on:
+      app:
+        condition: service_started
       db:
         condition: service_healthy
       redis:
         condition: service_started
-    restart: unless-stopped
-    networks:
-      - laravel_gestao-escolar
+    command: sh -lc "php artisan queue:work redis --sleep=3 --tries=3"
 
   redis:
     image: redis:7-alpine
     container_name: laravel-redis-gestao-escolar
+    restart: unless-stopped
     volumes:
-      - redis_data:/data
+      - ./.docker/redis_data:/data
     ports:
       - "6379:6379"
     networks:
@@ -52,13 +51,16 @@ services:
   db:
     image: mysql:8.0
     container_name: laravel-db-gestao-escolar
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: gestao-escolar
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
     volumes:
       - db_data:/var/lib/mysql
     ports:
-      - "3307:3306"
+      - "3309:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
       interval: 5s
@@ -70,12 +72,9 @@ services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: laravel-phpmyadmin-gestao-escolar
-    environment:
-      PMA_HOST: db
-      PMA_USER: root
-      PMA_PASSWORD: root
+    restart: unless-stopped
     ports:
-      - "8081:80"
+      - "8083:80"
     depends_on:
       db:
         condition: service_healthy
@@ -84,9 +83,6 @@ services:
 
 volumes:
   db_data:
-  redis_data:
-  vendor:
-  node_modules:
 
 networks:
   laravel_gestao-escolar:
