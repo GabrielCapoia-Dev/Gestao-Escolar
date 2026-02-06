@@ -324,6 +324,11 @@ class UserService
             ->striped();
     }
 
+    /**
+     * Colunas da tabela de usuários.
+     *
+     * @return array
+     */
     protected function colunasTabela(): array
     {
         return [
@@ -342,6 +347,7 @@ class UserService
             Tables\Columns\TextColumn::make('email')
                 ->label('E-mail')
                 ->wrap()
+                ->copyable()
                 ->copyable()
                 ->searchable(),
 
@@ -433,21 +439,26 @@ class UserService
     /**
      * Filtro genérico por escola (para Resources que não são Turma)
      */
+
+    /**
+     * Filtro genérico por escola (para Resources que não são Turma)
+     */
     public function aplicarFiltroPorEscolaDoUsuario(Builder $query, ?User $user): Builder
     {
         if (!$user || $this->ehAdmin($user)) {
-            return $query;
-        }
+            if (!$user || $this->ehAdmin($user)) {
+                return $query;
+            }
 
-        if ($user->ehProfessor()) {
-            $escolasIds = $user->professores->pluck('id_escola')->unique()->toArray();
-            return $query->whereIn('id_escola', $escolasIds);
-        }
+            if ($user->ehProfessor()) {
+                $escolasIds = $user->professores->pluck('id_escola')->unique()->toArray();
+                return $query->whereIn('id_escola', $escolasIds);
+            }
 
-        if (!empty($user->id_escola)) {
-            return $query->where('id_escola', $user->id_escola);
+            if (!empty($user->id_escola)) {
+                return $query->where('id_escola', $user->id_escola);
+            }
         }
-
         return $query;
     }
 
@@ -472,6 +483,7 @@ class UserService
         if (!empty($user->id_escola)) {
             return $query->where('id_escola', $user->id_escola);
         }
+
 
         return $query;
     }

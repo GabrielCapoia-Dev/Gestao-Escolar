@@ -168,6 +168,8 @@ class TurmaResource extends Resource
     {
         $userService = app(UserService::class);
 
+        $userService = app(UserService::class);
+
         return $table
             ->modifyQueryUsing(function (Builder $query) use ($userService) {
                 $user = Auth::user();
